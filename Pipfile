@@ -1,0 +1,28 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+flask-bcrypt = "*"
+flask-jwt-extended = "*"
+flask-cors = "*"
+flask-migrate = "*"
+flask-swagger = "*"
+flask-restx = "*"
+python-dotenv = "*"
+flask-admin = "*"
+psycopg2-binary = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
+python_full_version = "3.12.1"
+
+[scripts]
+start = "flask run"
+migrate = "flask db migrate"
+upgrade = "flask db upgrade"
