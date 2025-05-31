@@ -123,7 +123,7 @@ def get_token_user():
 
 #if not Found 
 @api.route('/current_user') 
-@jwt_required() 
+@jwt_required()  #obliga a que el usuario esté logueado
 def get_current_user(): 
     currennt_user=get_jwt_identity() 
     user=User.query.get(currennt_user['id']) 
@@ -133,7 +133,7 @@ def get_current_user():
 
 #Restringida por Token Usuario 
 @api.route('/users2')
-@jwt_required()
+@jwt_required() #obliga a que el usuario esté logueado
 def show_users():
     current_user_id = get_jwt_identity()  # Obtenemos el ID del usuario desde el token
     current_user = User.query.get(current_user_id)  # Buscamos al usuario en la base de datos
@@ -155,7 +155,8 @@ def show_users():
 
     return jsonify(user_list), 200 
 #DELETE USER     
-@api.route('delete_user/<init:user_id>',methods=['DELETE']) 
+@api.route('/delete_user/<int:user_id>',methods=['DELETE'])  
+@jwt_required()  #obliga a que el usuario esté logueado
 def delete_user(user_id): 
     user=User.query.get(user_id) 
     if not user: 
@@ -167,6 +168,7 @@ def delete_user(user_id):
 
 # EDITAR USER con PUT 
 @api.route('/edit_user/<int:user_id>',methods=['PUT']) 
+@jwt_required() #obliga a que el usuario esté logueado  
 def edit_user(user_id): 
     user=User.query.get(user_id) 
     if not user: 
@@ -241,7 +243,7 @@ def create_admin():
         return jsonify({"error creando Administrador":str(e)}),400  
 
 #Admin Token 
-@api.route('login_admin',methods=['POST'])
+@api.route('/login/admin',methods=['POST'])
 def get_token_admin(): 
     try: 
         email=request.json.get('email') 
@@ -281,7 +283,7 @@ def get_token_admin():
 
 #if Not Found 
 @api.route('/current_admin') 
-@jwt_required() 
+@jwt_required()  #obliga a que el usuario esté logueado
 def get_current_admin(): 
     current_admin=get_jwt_identity() 
     admin=Administrador.query.get(current_admin['id']) 
@@ -290,7 +292,8 @@ def get_current_admin():
     return jsonify(admin.serialize()),200 
 
 #DELETE ADMIN 
-@api.route('delete_admin/<int:admin_id>',methods=['DELETE']) 
+@api.route('/delete_admin/<int:admin_id>',methods=['DELETE'])  
+@jwt_required()  #obliga a que el usuario esté logueado
 def delete_admin(admin_id): 
     admin=Administrador.query.get(admin_id) 
     if not admin: 
@@ -301,7 +304,8 @@ def delete_admin(admin_id):
     return jsonify({"message":"Administrador Borrado Correctamente","admin_id":admin_id}),200 
 
 #EDIT ADMIN con PUT 
-@api.route('edit_admin/<int:admin_id>',methods=['PUT']) 
+@api.route('/edit_admin/<int:admin_id>',methods=['PUT']) 
+@jwt_required()  #obliga a que el usuario esté logueado 
 def edit_admin(admin_id): 
     admin=Administrador.query.get(admin_id) 
     if not admin: 
@@ -327,15 +331,24 @@ def edit_admin(admin_id):
 
 #Agregar Producto 
 @api.route('/producto',methods=['POST']) 
-@jwt_required() 
+@jwt_required() #obliga a que el usuario esté logueado
 def crear_producto(): 
     data= request.get_json() 
+    try:
+        precio = float(data['precio'])  # ✅ convierte string a float
+    except ValueError:
+        return jsonify({'msg': 'El precio debe ser un número (sin texto como "lps")'}), 400
 
+    try:
+        cantidad = int(data['cantidad'])  # ✅ también valida cantidad
+    except ValueError:
+        return jsonify({'msg': 'La cantidad debe ser un número entero'}), 400
     nuevo_producto=Product( 
-        nombre=data['nombre'], 
+        name=data['name'], 
         descripcion=data['descripcion'], 
         precio=data['precio'], 
-        imagen=data['imagen']
+        imagen=data['imagen'], 
+        cantidad=data['cantidad'],
     ) 
     db.session.add(nuevo_producto) 
     db.session.commit() 
@@ -354,7 +367,7 @@ def get_prodcuts():
         return jsonify({'error':str(e)}),500 
 
 #Producto Edit con PUT 
-@api.route('/edit_prodcuto/<int:prodcut_id>',methods=['PUT']) 
+@api.route('/edit_producto/<int:product_id>',methods=['PUT']) 
 def edit_producto(product_id): 
     product=Product.query.get(product_id) 
     if not product: 
@@ -382,7 +395,7 @@ def edit_producto(product_id):
         db.session.rollback() 
         return jsonify({'error':str(e)}),500 
 #DELETE Producto 
-@api.route('delete_producto/<int:product_id>',methods=['DELETE'])
+@api.route('/delete_producto/<int:product_id>',methods=['DELETE'])
 def delete_producto(product_id): 
     product=Product.query.get(product_id) 
     if product: 
@@ -396,17 +409,22 @@ def delete_producto(product_id):
 @jwt_required() 
 def agregar_a_carrito(): 
     data=request.get_json() 
-    user_id=get_jwt_identity()  
+    user_id=get_jwt_identity() # Aquí sacamos el ID del usuario que está haciendo la petición 
     product_id=data.get('product_id') 
     cantidad=data.get('cantidad',1) 
 
     if not product_id: 
-        return jsonify({'error':"falta el ID del Prodcuto"}),400  
+        return jsonify({'error':"falta el ID del Producto"}),400  
     
     #Verificamos si el producto existe
     product=Product.query.get(product_id) 
     if not product: 
-        return jsonify({'error':'Producto no encontrado'}),400
+        return jsonify({'error':'Producto no encontrado'}),400 
+    
+    #Validacion con el Campo cantidad  
+    if cantidad > product.cantidad: 
+        return jsonify({'error':f'No hay suficiente stock. Cantidad disponible: {product.cantidad}'}),400
+    
     
     nuevo_item=Carrito( 
         product_id=product_id, 
@@ -416,4 +434,98 @@ def agregar_a_carrito():
     db.session.add(nuevo_item) 
     db.session.commit() 
 
-    return jsonify({"msg":"Prodcuto agregado al carrito"}),201
+    return jsonify({"msg":"Producto agregado al carrito"}),201 
+#GET del CARRITO 
+@api.route('/carrito',methods=['GET']) 
+@jwt_required() 
+def ver_carrito(): 
+    user_id = get_jwt_identity() #si el token no pertenece a ese usuario, no lo deja ver el carrito. 
+      
+    
+    carrito=Carrito.query.filter_by(user_id=user_id).all() #Busca todos los productos en la tabla Carrito que tengan el mismo user_id
+    resultado=[] 
+
+    for item in carrito: 
+        producto=Product.query.get(item.product_id) 
+        resultado.append({ #append agruega al final
+            "carrito_id":item.carrito_id, 
+            "producto":producto.serialize(), 
+            "cantidad":item.cantidad
+        }) 
+    return jsonify(resultado),200 
+
+#PUT DE CARRITO 
+@api.route("/carrito/<int:carrito_id>",methods=['PUT']) 
+@jwt_required() 
+def editar_carrito(carrito_id):  
+    user_id = get_jwt_identity()  #si el token no pertenece a ese usuario, no lo deja ver el carrito. 
+     
+    #verifico si el carrito existe y que pertenezca al usuario que hace la petición 
+    producto=Product.query.all()
+    carrito=Carrito.query.filter_by(carrito_id=carrito_id,user_id=user_id).first() 
+    if not carrito: 
+        return jsonify({"message":"Carrito no encontrado"}),400 
+    
+    data=request.json  
+    if not isinstance(data,dict): 
+        return jsonify({"error":"Los datos deben ser un diccionario"}),400 
+    
+    # if "cantidad" in data: 
+    #     carrito.cantidad=data['cantidad'] 
+    #permite cambiar la cantidad y valida en stock
+    nueva_cantidad = data.get("cantidad")
+    if not nueva_cantidad:
+        return jsonify({"error": "Falta el campo cantidad"}), 400
+
+    producto = Product.query.get(carrito.product_id)
+    if nueva_cantidad > producto.cantidad:
+        return jsonify({"error": f"No hay suficiente stock. Solo hay {producto.cantidad} disponibles"}), 400
+
+    carrito.cantidad = nueva_cantidad
+
+    
+    
+    if "producto_id" in data:
+        carrito.product_id=data['producto_id'] 
+
+  
+    try: 
+        db.session.commit() 
+        return jsonify({"message":"El Carrito se edito correctamente"}),200 
+    except Exception as e: 
+        db.session.rollback() 
+        return jsonify({"error":str(e)}),500 
+
+#DELETE CARRITO completo
+@api.route('/delete_carrito/<int:carrito_id>',methods=["DELETE"])  
+@jwt_required() 
+def delete_carrito(carrito_id) : 
+    user_id = get_jwt_identity()  # Obtengo el usuario que hace la petición
+
+    # Busco el carrito que tenga el carrito_id y que además pertenezca a este usuario
+
+    carrito = Carrito.query.filter_by(carrito_id=carrito_id, user_id=user_id).first()
+    if carrito: 
+
+        db.session.delete(carrito) 
+        db.session.commit() 
+        return jsonify("Carrito Eliminado"),200 
+    return jsonify('no se encontro Carrito')  
+
+#DELETE un Producto del Carrito   
+@api.route('/delete_producto_carrito/<int:carrito_id>/<int:product_id>',methods=['DELETE']) 
+@jwt_required() 
+def delete_producto_carrito(carrito_id,product_id): 
+    user_id = get_jwt_identity()
+ 
+    carrito=Carrito.query.filter_by(carrito_id=carrito_id,product_id=product_id,user_id=user_id).first() 
+    if not carrito:
+     return jsonify('no se encontró el producto'), 404
+    if carrito: 
+
+         db.session.delete(carrito) 
+         db.session.commit() 
+         return jsonify("Producto eliminado del carrito") ,200 
+    return jsonify('no se encontro el producto')
+
+
