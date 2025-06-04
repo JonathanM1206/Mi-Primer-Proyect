@@ -7,7 +7,7 @@ from flask_migrate import Migrate
 from flask_restx import Api 
 from api.utils import APIException, generate_sitemap
 from api.models import db
-from api.routes import api 
+from api.routes import api  
 
 from flask_bcrypt import Bcrypt  
 from flask_jwt_extended import JWTManager
@@ -16,7 +16,17 @@ from api.commands import setup_commands
 from flask_cors import CORS 
 
 # from models import Person
-app = Flask(__name__)  
+app = Flask(__name__)   
+CORS(app, resources={r"/api/*": {"origins": "https://redesigned-halibut-6949wqj5p44xfrx46-5173.app.github.dev/"}})
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'uploads')
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER  #subir imagenes
+
+
 ENV="development" if os.getenv("FLASK_DEBUG")=="1" else "production"  
 static_file_dir = os.path.join(os.path.dirname( 
    os.path.realpath(__file__)),'../public/')  
@@ -71,6 +81,10 @@ def serve_any_other_file(path):
     response = send_from_directory(static_file_dir, path)
     response.cache_control.max_age = 0  # avoid cache memory
     return response
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename) #subir imagenes
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=3245, debug=True) 

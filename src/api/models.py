@@ -76,7 +76,7 @@ class Product (db.Model):
             "cantidad":self.cantidad, 
             "name":self.name, 
             "imagen":self.imagen,
-            "description":self.descripcion,
+            "descripcion":self.descripcion,
             "role":self.role
         } 
 class Carrito (db.Model): 

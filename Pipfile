@@ -15,6 +15,7 @@ flask-restx = "*"
 python-dotenv = "*"
 flask-admin = "*"
 psycopg2-binary = "*"
+werkzeug = "*"
 
 [dev-packages]
 

@@ -1,26 +1,38 @@
-import os 
-from flask import Flask, request ,jsonify,Blueprint   
+import os
+from flask import Flask, request, jsonify, Blueprint   
 from api.models import db, User, Administrador, Product, Carrito, Post
 from api.utils import APIException 
 from flask_cors import CORS 
 from flask_bcrypt import Bcrypt 
-from flask_jwt_extended import JWTManager, create_access_token,jwt_required, get_jwt_identity,get_jwt  
-from datetime import timedelta
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt  
+from datetime import timedelta  
+from werkzeug.utils import secure_filename
 
+UPLOAD_FOLDER = './uploads'  # Carpeta donde guardarás las imágenes
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'} 
 
-app=Flask(__name__) 
-api = Blueprint('api',__name__) 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS 
+
+app = Flask(__name__) 
+api = Blueprint('api', __name__) 
+
+# Aquí agregamos la configuración de la carpeta para subir imágenes
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Crear la carpeta si no existe (esto es opcional pero recomendable)
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 CORS(app)
- 
-#Encriptacion JWT-- 
-app.config["JWT_SECRET_KEY"]=os.getenv('JWT_SECRET_KEY_OWN','super-secret-key') 
-app.config["JWT_TOKEN_LOCATION"]=["headers"] 
 
-bcrypt =Bcrypt() 
-jwt= JWTManager() 
-jwt.init_app(app) 
+# Encriptacion JWT
+app.config["JWT_SECRET_KEY"] = os.getenv('JWT_SECRET_KEY_OWN', 'super-secret-key') 
+app.config["JWT_TOKEN_LOCATION"] = ["headers"] 
 
+bcrypt = Bcrypt() 
+jwt = JWTManager() 
+jwt.init_app(app)
 #Ruta Ejemplo 
 
 @api.route('/hello',methods=['POST']) 
@@ -110,7 +122,8 @@ def get_token_user():
                 expires_delta=expires  
                 ) 
             user_data={ 
-                "email":login_user.email, 
+                "email":login_user.email,  
+                "name":login_user.name,
                 "id":login_user.user_id, 
                  "role":login_user.role,
                 "access_token":access_token
@@ -271,6 +284,7 @@ def get_token_admin():
             )   
             admin_data={ 
                 "email":login_admin.email, 
+                "name":login_admin.name,   
                 "id":login_admin.admin_id, 
                 "role":login_admin.role, 
                 "access_token":access_token
@@ -322,7 +336,7 @@ def edit_admin(admin_id):
         return jsonify({'error':"los datos deben ser un diccionario"}),400 
     
     try: 
-        db.session.commint() 
+        db.session.commit() 
         return jsonify({'message':"El Administrador se actualizo correctamente"}),200 
     except Exception as e: 
         db.session.rollback() 
@@ -332,23 +346,47 @@ def edit_admin(admin_id):
 #Agregar Producto 
 @api.route('/producto',methods=['POST']) 
 @jwt_required() #obliga a que el usuario esté logueado
-def crear_producto(): 
-    data= request.get_json() 
+def crear_producto():  
+    admin_id = get_jwt_identity()  #  obtiene el ID del usuario desde el token
+
+    admin = Administrador.query.get(admin_id)  #  busca al usuario en la base de datos
+    if not admin or admin.role != "admin":  #  valida que sea admin
+        return jsonify({"msg": "Acceso denegado. Solo los administradores pueden crear productos."}), 403
+
+    #Verificamos si hay imagen  
+    if 'imagen' not in request.files: 
+        return jsonify({'msg': 'No se ha proporcionado una imagen'}), 400 
+    
+    imagen = request.files['imagen']  #  obtenemos la imagen del request 
+    
+    if imagen.filename == '':  #  verificamos que la imagen tenga un nombre
+        return jsonify({'msg': 'No se ha proporcionado una imagen con nombre'}), 400 
+    
+    if not allowed_file(imagen.filename):  #  validamos el tipo de archivo
+        return jsonify({'msg': 'Tipo de archivo no permitido. Solo se permiten imágenes'}), 400 
+    
+    # Guardamos la imagen en el servidor    
+    filename = secure_filename(imagen.filename)
+    imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+
+
+    data= request.form
     try:
-        precio = float(data['precio'])  # ✅ convierte string a float
+        precio = float(data['precio'])  #  convierte string a float
     except ValueError:
         return jsonify({'msg': 'El precio debe ser un número (sin texto como "lps")'}), 400
 
     try:
-        cantidad = int(data['cantidad'])  # ✅ también valida cantidad
+        cantidad = int(data['cantidad'])  #  también valida cantidad
     except ValueError:
         return jsonify({'msg': 'La cantidad debe ser un número entero'}), 400
     nuevo_producto=Product( 
         name=data['name'], 
         descripcion=data['descripcion'], 
-        precio=data['precio'], 
-        imagen=data['imagen'], 
-        cantidad=data['cantidad'],
+        precio=precio, 
+        imagen=filename, 
+        cantidad=cantidad,
     ) 
     db.session.add(nuevo_producto) 
     db.session.commit() 
@@ -357,7 +395,8 @@ def crear_producto():
 
 #Producto GET 
 @api.route('/producto',methods=['GET']) 
-def get_prodcuts(): 
+def get_prodcuts():  
+    
     try: 
         products=Product.query.all() # Trae todos los productos de la base
         # Ahora convertimos cada producto a diccionario usando serialize
@@ -366,44 +405,79 @@ def get_prodcuts():
     except Exception as e: 
         return jsonify({'error':str(e)}),500 
 
-#Producto Edit con PUT 
-@api.route('/edit_producto/<int:product_id>',methods=['PUT']) 
-def edit_producto(product_id): 
-    product=Product.query.get(product_id) 
-    if not product: 
-        return jsonify({"error":"Producto no encontrado"}),400 
-    
-    data=request.json 
-    if "name" in data: 
-        product.name=data['name']
-    if "precio" in data: 
-        product.precio=data['precio'] 
-    if "cantidad" in data: 
-        product.cantidad=data['cantidad'] 
-    if "descripcion" in data: 
-        product.descripcion=data['descripcion'] 
-    if "imagen" in data: 
-        product.imagen=data['imagen'] 
-    
-    if not isinstance(data,dict): 
-        return jsonify({'error':"los datos debe ser un diccionario"}),400 
-    
-    try: 
+@api.route('/edit_producto/<int:product_id>', methods=['PUT'])
+@jwt_required()
+def edit_producto(product_id):
+    admin_id = get_jwt_identity()
+
+    admin = User.query.get(admin_id)
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado. Solo los administradores pueden crear productos."}), 403
+
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"error": "Producto no encontrado"}), 400
+
+    # Ahora validamos si viene JSON o formulario con archivoporquew tan complicasdo solo para subir una imagen que se reconozca por el nombre ?
+
+    if 'file' in request.files:
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # Guardamos el archivo en la carpeta uploads
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            # Guardamos el nombre o path en el producto (puede ser solo el filename)
+            product.imagen = filename
+        else:
+            return jsonify({'error': 'Archivo no permitido'}), 400
+
+    # Los demás campos vienen en request.form o en JSON (según el cliente)
+    data = request.form.to_dict()  # si viene formulario con archivo, los datos vienen acá
+
+    # Si no hay datos en formulario, intenta JSON
+    if not data:
+        data = request.json
+
+    if not isinstance(data, dict):
+        return jsonify({'error': "Los datos deben ser un diccionario"}), 400
+
+    if "name" in data:
+        product.name = data['name']
+    if "precio" in data:
+        try:
+            product.precio = float(data['precio'])
+        except ValueError:
+            return jsonify({'error': 'El precio debe ser un número'}), 400
+    if "cantidad" in data:
+        try:
+            product.cantidad = int(data['cantidad'])
+        except ValueError:
+            return jsonify({'error': 'La cantidad debe ser un entero'}), 400
+    if "descripcion" in data:
+        product.descripcion = data['descripcion']
+
+    try:
         db.session.commit()
-        return jsonify({'message':'El Producto se actualizo correctamente'}),200 
-    except Exception as e: 
-        db.session.rollback() 
-        return jsonify({'error':str(e)}),500 
+        return jsonify({'message': 'El Producto se actualizó correctamente'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 #DELETE Producto 
-@api.route('/delete_producto/<int:product_id>',methods=['DELETE'])
+@api.route('/delete_producto/<int:product_id>',methods=['DELETE']) 
+@jwt_required()  # 👈 obliga a que el usuario esté logueado
 def delete_producto(product_id): 
+    admin_id = get_jwt_identity()  # 👈 obtiene el ID del usuario desde el token
+
+    admin = User.query.get(admin_id)  # 👈 busca al usuario en la base de datos
+    if not admin or admin.role != "admin":  # 👈 valida que sea admin
+        return jsonify({"msg": "Acceso denegado. Solo los administradores pueden crear productos."}), 403 
     product=Product.query.get(product_id) 
     if product: 
 
         db.session.delete(product) 
         db.session.commit() 
         return jsonify('Producto Borrado'),200 
-    return jsonify({'message':"Producto Borrado Correctamente","product_id":product_id}),404 
+    return jsonify({'message':"Producto no Encontrado","product_id":product_id}),404 
 #Crear Carrito 
 @api.route('/carrito', methods=['POST']) 
 @jwt_required() 
