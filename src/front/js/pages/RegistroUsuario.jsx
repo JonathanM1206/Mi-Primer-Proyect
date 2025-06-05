@@ -16,7 +16,7 @@ e.preventDefault();
 await actions.registroUsuario(name, email, password); 
 
 if(store.user){ 
-  navigate("/");
+  navigate("/loginUsuario");
 }
 
 } 

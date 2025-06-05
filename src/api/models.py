@@ -1,3 +1,4 @@
+
 from flask_sqlalchemy import SQLAlchemy 
 
 db=SQLAlchemy()  
@@ -75,7 +76,7 @@ class Product (db.Model):
             "precio":self.precio, 
             "cantidad":self.cantidad, 
             "name":self.name, 
-            "imagen":self.imagen,
+            "imagen": f'/uploads/{self.imagen}' if self.imagen else None,
             "descripcion":self.descripcion,
             "role":self.role
         } 

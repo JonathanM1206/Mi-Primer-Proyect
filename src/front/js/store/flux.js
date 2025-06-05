@@ -139,6 +139,47 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.error("Error al editar el usuario:", error);
                 }
             },
+            //Eliminar usuario 
+            eliminarUsuario: async (userId) => {
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                userId = userId || getStore().user?.id || localStorage.getItem("id");
+                if (!userId) {
+                    console.error("No se proporcionó un ID de usuario válido para eliminar.", userId);
+                    return;
+                }
+                try {
+                    const token = getStore().token;
+                    const response = await fetch(`${baseUrl}api/delete_user/${userId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Error al eliminar el usuario:", errorData);
+                        throw new Error(errorData.error || 'Error al eliminar el usuario');
+                    }
+                    console.log("Usuario eliminado exitosamente:", userId);
+                    const store = getStore();
+                    console.log("Store antes de eliminar el usuario:", store);
+                    if (Array.isArray(store.users)) {
+                        setStore({
+                            ...store,
+                            users: store.users.filter(user => user.id !== userId),
+                            message: 'Usuario eliminado exitosamente'
+                        });
+                    }
+                    if (store.user && store.user.id === parseInt(userId)) {
+                        localStorage.removeItem("token");
+                        setStore({ user: null, token: null, message: 'Usuario eliminado exitosamente' });
+                    }
+                } catch (error) {
+                    console.error("Error al eliminar el usuario:", error);
+                }
+            }
+            ,
 
             //Login de administrador 
             loginAdmin: async (email, password) => {
@@ -241,7 +282,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.log("Respuesta del servidor:", response)
 
                     if (!response.ok) {
-                        const errorData = await response.json() 
+                        const errorData = await response.json()
                         console.error("Error al agregar producto:", errorData)
                         throw new Error(errorData.msg || 'Error al agregar producto')
                     }
@@ -296,24 +337,118 @@ const getState = ({ getStore, getActions, setStore }) => {
                     });
                 }
             },
+            eliminarProducto: async (productoId) => {
+                productoId = productoId || getStore().producto?.product_id || localStorage.getItem("productoId");
+
+                if (!productoId) {
+                    console.error("No se proporcionó un ID de producto válido para eliminar.", productoId);
+                    return;
+                }
+
+                try {
+                    const token = getStore().token;
+                    const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+
+                    const response = await fetch(`${baseUrl}api/delete_producto/${productoId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Error al eliminar el producto:", errorData);
+                        throw new Error(errorData.error || 'Error al eliminar el producto');
+                    }
+
+                    console.log("Producto eliminado exitosamente:", productoId);
+
+                    const store = getStore();
+                    console.log("Store antes de eliminar el producto:", store);
+                    if (Array.isArray(store.productos)) {
+                        setStore({
+                            ...store,
+                            productos: store.productos.filter(producto => producto.product_id !== productoId),
+                            message: 'Producto eliminado exitosamente'
+                        });
+                    }
+
+                    if (store.producto && store.producto.product_id === productoId) {
+                        setStore({
+                            ...store,
+                            producto: null,
+                            message: 'Producto eliminado exitosamente'
+                        });
+                    }
+
+                } catch (error) {
+                    console.error("Error al eliminar el producto:", error);
+                    const store = getStore();
+                    setStore({ ...store, message: error.message || "Error al eliminar el producto" });
+                }
+            },
+            editarProducto: async (productoBody, productoId) => {
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                try {
+                    const token = getStore().token;
+                    const response = await fetch(`${baseUrl}api/edit_producto/${productoId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify(productoBody)
+                    })
+                    console.log('Respuesta del servidor:', response);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Error al editar el producto:", errorData);
+                        throw new Error(errorData.error || 'Error al editar el producto');
+                    }
+
+                    console.log("Producto editado exitosamente");
+                    const data = await response.json();
+                    console.log("Datos del producto editado:", data);
+                    localStorage.setItem('name', productoBody.name);
+                    localStorage.setItem('descripcion', productoBody.descripcion);
+                    localStorage.setItem('precio', productoBody.precio);
+                    localStorage.setItem('cantidad', productoBody.cantidad);
+                    localStorage.setItem('imagen', productoBody.imagen); // Asegúrate de que este campo sea correcto 
+                    let store = getStore();
+                    setStore({
+                        ...store, producto: {
+                            ...getStore().producto,
+                            name: productoBody.name,
+                            descripcion: productoBody.descripcion,
+                            precio: productoBody.precio,
+                            cantidad: productoBody.cantidad,
+                            imagen: productoBody.imagen
+                        },
+                        message: 'Producto editado exitosamente'
+                    })
+                    console.log("Producto editado exitosamente:", data);
+
+                    return true;
+                } catch (error) {
+                    console.error("Error al editar el producto:", error);
+                }
+            },
+
             //Log out de usuario o administrador 
             logout: () => {
-                localStorage.removeItem("userData");
+                localStorage.removeItem("admin");
+                localStorage.removeItem("user");
+                localStorage.removeItem("token");
                 localStorage.removeItem("role");
-                setStore({ admin: null, user: null })
-            },
-            loadSession: () => {
-                const storeAdmin = localStorage.getItem("admin");
-                const storeUser = localStorage.getItem("user");
-                const storeToken = localStorage.getItem("token");
-                let store = getStore();
+
                 setStore({
-                    ...store,
-                    admin: storeAdmin ? JSON.parse(storeAdmin) : null,
-                    user: storeUser ? JSON.parse(storeUser) : null,
-                    token: storeToken || null,
+                    admin: null,
+                    user: null,
+                    token: null
                 });
-            }
+            },
         }
     }
 }

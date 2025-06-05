@@ -366,7 +366,9 @@ def crear_producto():
         return jsonify({'msg': 'Tipo de archivo no permitido. Solo se permiten imágenes'}), 400 
     
     # Guardamos la imagen en el servidor    
-    filename = secure_filename(imagen.filename)
+    filename = secure_filename(imagen.filename) 
+    print("Guardando imagen en:", os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
     imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
 
@@ -386,7 +388,8 @@ def crear_producto():
         descripcion=data['descripcion'], 
         precio=precio, 
         imagen=filename, 
-        cantidad=cantidad,
+        cantidad=cantidad, 
+
     ) 
     db.session.add(nuevo_producto) 
     db.session.commit() 
@@ -410,7 +413,7 @@ def get_prodcuts():
 def edit_producto(product_id):
     admin_id = get_jwt_identity()
 
-    admin = User.query.get(admin_id)
+    admin = Administrador.query.get(admin_id)
     if not admin or admin.role != "admin":
         return jsonify({"msg": "Acceso denegado. Solo los administradores pueden crear productos."}), 403
 
@@ -424,7 +427,8 @@ def edit_producto(product_id):
         file = request.files['file']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            # Guardamos el archivo en la carpeta uploads
+            # Guardamos el archivo en la carpeta uploads 
+            print("Guardando imagen en:", os.path.join(UPLOAD_FOLDER, filename))
             file.save(os.path.join(UPLOAD_FOLDER, filename))
             # Guardamos el nombre o path en el producto (puede ser solo el filename)
             product.imagen = filename
@@ -468,7 +472,7 @@ def edit_producto(product_id):
 def delete_producto(product_id): 
     admin_id = get_jwt_identity()  # 👈 obtiene el ID del usuario desde el token
 
-    admin = User.query.get(admin_id)  # 👈 busca al usuario en la base de datos
+    admin = Administrador.query.get(admin_id)  # 👈 busca al usuario en la base de datos
     if not admin or admin.role != "admin":  # 👈 valida que sea admin
         return jsonify({"msg": "Acceso denegado. Solo los administradores pueden crear productos."}), 403 
     product=Product.query.get(product_id) 
