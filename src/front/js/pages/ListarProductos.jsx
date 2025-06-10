@@ -100,8 +100,10 @@ const ListarProductos = () => {
                   <>
                     <p><strong>Nombre:</strong> {producto.name}</p>
                     <p><strong>Descripción:</strong> {producto.descripcion}</p>
-                    <p><strong>Precio Lps.:</strong> {producto.precio}</p>
-                    <p><strong>Cantidad disponible:</strong> {producto.cantidad}</p>
+                    <p><strong>Precio Lps.:</strong> {producto.precio}</p>                    
+                    <span style={{paddingRight:'5px'}}><button className='btn' style={{background:"#2e8b57"}}>Ver Producto</button></span>
+
+                   <button className='btn' style={{background:"#00bfff"}}>Agregar Carrito</button> 
                   </>
                 )}
 

@@ -12,7 +12,8 @@ const getState = ({ getStore, getActions, setStore }) => {
             role: localStorage.getItem("role") || null,
             producto: {},
             productos: [],
-            carrito: {}
+            carrito: {}, 
+            carritos: [],
 
 
 
@@ -435,7 +436,17 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.error("Error al editar el producto:", error);
                 }
             },
-
+            //Agregar un producto al carrito 
+            agregarProductoCarrito: async (productoId, cantidad) => { 
+                
+                
+                try {
+                    
+                } catch (error) { 
+                    console.error("Error al agregar producto al carrito:", error);
+                    
+                }
+            },
             //Log out de usuario o administrador 
             logout: () => {
                 localStorage.removeItem("admin");
