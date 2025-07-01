@@ -86,7 +86,7 @@ class Carrito (db.Model):
     product_id=db.Column(db.Integer,db.ForeignKey('product.product_id'),) 
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     cantidad=db.Column(db.Integer, nullable=False) 
-    role=db.Column(db.String(100),nullable=False,default='carrito')   
+    role=db.Column(db.String(100),nullable=False,default='carrito')    
     #Relationship  
     user = db.relationship('User', back_populates='carritos')
     product = db.relationship('Product', back_populates='carritos')
@@ -97,8 +97,8 @@ class Carrito (db.Model):
             "carrito_id":self.carrito_id,
             "product_id":self.product_id, 
             "user_id":self.user_id,  
-            "cantidad":self.cantidad 
-            ,
+            "cantidad":self.cantidad, 
+            "product":self.product.serialize
 
         }
 

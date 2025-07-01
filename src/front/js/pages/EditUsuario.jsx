@@ -59,7 +59,8 @@ const EditUsuario = () => {
             }
             await actions.editarUsuario(userData, store.user?.id || localStorage.getItem("id")); //aqui llamo el id 
             setIsEditing(false);
-        } catch (error) {
+        } catch (error) { 
+            swal("Error", "No se pudo editar el usuario", "error");
             console.error("Error al editar el usuario:", error);
         }
     }
@@ -76,9 +77,9 @@ const EditUsuario = () => {
     let name = store.user?.name || localStorage.getItem("name");
     let email = store.user?.email || localStorage.getItem("email");
     return (
-        <div>
+        <div style={{ paddingTop: '10px', display: 'flex', justifyContent: 'center' }}>
             {/* //Informacion */}
-            <div className='Perfil'>
+            <div className='     Perfil   ' >
                 <h1>Mi Perfil</h1>
                 <p>
                     <strong>User:</strong>
@@ -93,7 +94,13 @@ const EditUsuario = () => {
                 {isEditing ? <input type='password' name='password' value={userData.password} onChange={handleChange}/>: password}</p> */}
             </div>
             {/* Botones de Editar y Guardar */}
-            <div className='Botones'>
+            <div className='Botones' style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "10px"
+          }}>
                 {isEditing ? (
                     <>
                         <button className='btn btn-success' onClick={handleSave}>Guardar</button>

@@ -1,11 +1,32 @@
 import React, { useEffect, useContext, useState } from 'react';
 import { Context } from '../store/appContext.jsx';
 import swal from 'sweetalert';
+import { Link } from 'react-router-dom'; 
 
 const ListarProductos = () => {
   const { store, actions } = useContext(Context);
   const [productToEdit, setProductToEdit] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [cantidades, setCantidades] = useState({});
+
+  const handleCantidadChange = (e, productoId) => {
+    const nuevaCantidad = parseInt(e.target.value) || 1;
+    setCantidades({
+      ...cantidades,
+      [productoId]: nuevaCantidad
+    });
+  };
+
+  const agregoProducto = async (productoId, cantidad = 1) => {
+    console.log("Id", productoId)
+    try {
+      await actions.agregarProductoCarrito(productoId, cantidad)
+      swal("Producto agregado", "Se ha agregado al carrito", "success");
+    } catch (error) {
+      swal("Error debe Loguearse", error.message || "No se pudo agregar", "error");
+
+    }
+  }
 
   const handleChange = (e) => {
     setProductToEdit({
@@ -16,13 +37,13 @@ const ListarProductos = () => {
 
   const handleSubmit = async () => {
     try {
-      await actions.editarProducto(productToEdit, editingId); 
+      await actions.editarProducto(productToEdit, editingId);
 
       setEditingId(null); // Salimos del modo edición 
       await actions.getProductos(); // Actualizamos la lista de productos 
       swal("Producto editado", "El producto ha sido editado correctamente", "success");
     } catch (error) {
-      console.error("Error al editar el producto:", error); 
+      console.error("Error al editar el producto:", error);
       swal("Error", "No se pudo editar el producto", "error");
     }
   };
@@ -55,7 +76,7 @@ const ListarProductos = () => {
         swal("Error", "No se pudo eliminar el producto", "error");
       }
     }
-  }; 
+  };
 
   useEffect(() => {
     actions.getProductos();
@@ -71,11 +92,11 @@ const ListarProductos = () => {
       <div className="row">
         {store.productos.length === 0 && <p>No hay productos para mostrar</p>}
 
-        {store.productos.map((producto) => (
+        {store.productos.map((producto,index) => (
           <div key={producto.product_id} className="col-md-4 mb-4">
             <div className="card shadow">
               <img
-                src={`https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/${producto.imagen}`}
+                src={`https://redesigned-halibut-6949wqj5p44xfrx46-5173.app.github.dev${producto.imagen}`}
                 alt={producto.name}
                 className="card-img-top"
                 style={{
@@ -100,10 +121,30 @@ const ListarProductos = () => {
                   <>
                     <p><strong>Nombre:</strong> {producto.name}</p>
                     <p><strong>Descripción:</strong> {producto.descripcion}</p>
-                    <p><strong>Precio Lps.:</strong> {producto.precio}</p>                    
-                    <span style={{paddingRight:'5px'}}><button className='btn' style={{background:"#2e8b57"}}>Ver Producto</button></span>
+                    <p><strong>Precio Lps.:</strong> {producto.precio}</p> 
+                    <p><strong>Unidades Disponibles:</strong> {producto.cantidad}</p>
 
-                   <button className='btn' style={{background:"#00bfff"}}>Agregar Carrito</button> 
+                    <span style={{ paddingRight: '5px' }} ><Link className='btn' style={{ background: "#2e8b57" }} to={`/DetalleProducto/${producto.product_id}`}>Ver Producto</Link></span>
+
+                    <div className="d-flex align-items-center">
+                      <input
+                        type="number"
+                        min="1"
+                        value={cantidades[producto.product_id] || 1}
+                        onChange={(e) => handleCantidadChange(e, producto.product_id)}
+                        className="form-control me-2"
+                        style={{ width: "80px" }}
+                      />
+                      <button
+                        className="btn"
+                        style={{ background: "#00bfff" }}
+                        onClick={() =>
+                          agregoProducto(producto.product_id, cantidades[producto.product_id] || 1)
+                        }
+                      >
+                        Agregar Carrito
+                      </button>
+                    </div>
                   </>
                 )}
 

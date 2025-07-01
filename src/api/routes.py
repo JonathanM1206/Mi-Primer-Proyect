@@ -408,6 +408,15 @@ def get_prodcuts():
     except Exception as e: 
         return jsonify({'error':str(e)}),500 
 
+#GET Producto por ID 
+@api.route('/producto/<int:product_id>',methods=['GET']) 
+def get_producto(product_id): 
+    product=Product.query.get(product_id) 
+    if not product: 
+        return jsonify({'error':'Producto no encontrado'}),404 
+    
+    return jsonify(product.serialize()),200     
+#Edit Producto con PUT
 @api.route('/edit_producto/<int:product_id>', methods=['PUT'])
 @jwt_required()
 def edit_producto(product_id):
@@ -486,33 +495,48 @@ def delete_producto(product_id):
 @api.route('/carrito', methods=['POST']) 
 @jwt_required() 
 def agregar_a_carrito(): 
-    data=request.get_json() 
-    user_id=get_jwt_identity() # Aquí sacamos el ID del usuario que está haciendo la petición 
-    product_id=data.get('product_id') 
-    cantidad=data.get('cantidad',1) 
+    data = request.get_json() 
+    user_id = get_jwt_identity()  # ID del usuario que hace la petición
+    product_id = data.get('product_id') 
+    cantidad = data.get('cantidad', 1) 
 
     if not product_id: 
-        return jsonify({'error':"falta el ID del Producto"}),400  
+        return jsonify({'error': "falta el ID del Producto"}), 400  
     
-    #Verificamos si el producto existe
-    product=Product.query.get(product_id) 
+    # Verificamos si el producto existe
+    product = Product.query.get(product_id) 
     if not product: 
-        return jsonify({'error':'Producto no encontrado'}),400 
+        return jsonify({'error': 'Producto no encontrado'}), 400 
     
-    #Validacion con el Campo cantidad  
-    if cantidad > product.cantidad: 
-        return jsonify({'error':f'No hay suficiente stock. Cantidad disponible: {product.cantidad}'}),400
-    
-    
-    nuevo_item=Carrito( 
-        product_id=product_id, 
-        user_id=user_id, 
-        cantidad=cantidad
-    )
-    db.session.add(nuevo_item) 
-    db.session.commit() 
+    # Buscamos si el producto ya está en el carrito del usuario
+    carrito_item = Carrito.query.filter_by(user_id=user_id, product_id=product_id).first()
 
-    return jsonify({"msg":"Producto agregado al carrito"}),201 
+    if carrito_item:
+        # Si ya existe, sumamos las cantidades
+        nueva_cantidad = carrito_item.cantidad + cantidad
+
+        # Validamos stock
+        if nueva_cantidad > product.cantidad:
+            return jsonify({'error': f'No hay suficiente stock. Cantidad disponible: {product.cantidad}'}), 400
+
+        carrito_item.cantidad = nueva_cantidad
+        db.session.commit()
+        return jsonify({"msg": "Cantidad actualizada en el carrito"}), 200
+
+    else:
+        # Si no existe, agregamos un nuevo item
+        if cantidad > product.cantidad:
+            return jsonify({'error': f'No hay suficiente stock. Cantidad disponible: {product.cantidad}'}), 400
+
+        nuevo_item = Carrito( 
+            product_id=product_id, 
+            user_id=user_id, 
+            cantidad=cantidad
+        )
+        db.session.add(nuevo_item) 
+        db.session.commit() 
+
+        return jsonify({"msg": "Producto agregado al carrito"}), 201
 #GET del CARRITO 
 @api.route('/carrito',methods=['GET']) 
 @jwt_required() 
@@ -557,7 +581,12 @@ def editar_carrito(carrito_id):
 
     producto = Product.query.get(carrito.product_id)
     if nueva_cantidad > producto.cantidad:
-        return jsonify({"error": f"No hay suficiente stock. Solo hay {producto.cantidad} disponibles"}), 400
+        return jsonify({"error": f"No hay suficiente stock. Solo hay {producto.cantidad} disponibles"}), 400 
+    
+    if nueva_cantidad < 1:
+     db.session.delete(carrito)
+     db.session.commit()
+     return jsonify({"msg": "Producto eliminado del carrito"}), 200
 
     carrito.cantidad = nueva_cantidad
 
@@ -575,6 +604,31 @@ def editar_carrito(carrito_id):
         return jsonify({"error":str(e)}),500 
 
 #DELETE CARRITO completo
+@api.route('/carrito', methods=['DELETE'])
+@jwt_required()
+def vaciar_carrito_completo():
+    user_id = get_jwt_identity()
+    Carrito.query.filter_by(user_id=user_id).delete()
+    db.session.commit()
+    return jsonify({"msg": "Todos los productos del carrito fueron eliminados"}), 200
+ 
+# #DELETE un Producto del Carrito   
+# @api.route('/delete_producto_carrito/<int:carrito_id>/<int:product_id>',methods=['DELETE']) 
+# @jwt_required() 
+# def delete_producto_carrito(carrito_id,product_id): 
+#     user_id = get_jwt_identity()
+ 
+#     carrito=Carrito.query.filter_by(carrito_id=carrito_id,product_id=product_id,user_id=user_id).first() 
+#     if not carrito:
+#      return jsonify('no se encontró el producto'), 404
+#     if carrito: 
+
+#          db.session.delete(carrito) 
+#          db.session.commit() 
+#          return jsonify("Producto eliminado del carrito") ,200 
+#     return jsonify('no se encontro el producto')
+
+ #DELETE Prodcuto del  CARRITO 
 @api.route('/delete_carrito/<int:carrito_id>',methods=["DELETE"])  
 @jwt_required() 
 def delete_carrito(carrito_id) : 
@@ -588,22 +642,5 @@ def delete_carrito(carrito_id) :
         db.session.delete(carrito) 
         db.session.commit() 
         return jsonify("Carrito Eliminado"),200 
-    return jsonify('no se encontro Carrito')  
-
-#DELETE un Producto del Carrito   
-@api.route('/delete_producto_carrito/<int:carrito_id>/<int:product_id>',methods=['DELETE']) 
-@jwt_required() 
-def delete_producto_carrito(carrito_id,product_id): 
-    user_id = get_jwt_identity()
- 
-    carrito=Carrito.query.filter_by(carrito_id=carrito_id,product_id=product_id,user_id=user_id).first() 
-    if not carrito:
-     return jsonify('no se encontró el producto'), 404
-    if carrito: 
-
-         db.session.delete(carrito) 
-         db.session.commit() 
-         return jsonify("Producto eliminado del carrito") ,200 
-    return jsonify('no se encontro el producto')
-
+    return jsonify('no se encontro Carrito') 
 

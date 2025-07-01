@@ -12,7 +12,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             role: localStorage.getItem("role") || null,
             producto: {},
             productos: [],
-            carrito: {}, 
+            carrito: [],
             carritos: [],
 
 
@@ -338,6 +338,33 @@ const getState = ({ getStore, getActions, setStore }) => {
                     });
                 }
             },
+            //Ver un producto por su id 
+            getProductoPorId: async (id) => {
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                try {
+                    const response = await fetch(`${baseUrl}api/producto/${id}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Error al obtener el producto:", errorData);
+                        throw new Error(errorData.error || 'Error al obtener el producto');
+                    }
+                    const data = await response.json();
+                    console.log("Producto encontrado:", data);
+                    return data; // Retorna el producto encontrado 
+
+
+                } catch (error) {
+                    console.error("Error al obtener el producto por ID:", error);
+                    return null
+                }
+            },
+            //Eliminar un producto por su id
             eliminarProducto: async (productoId) => {
                 productoId = productoId || getStore().producto?.product_id || localStorage.getItem("productoId");
 
@@ -390,6 +417,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     setStore({ ...store, message: error.message || "Error al eliminar el producto" });
                 }
             },
+            //editar un producto por su id
             editarProducto: async (productoBody, productoId) => {
                 const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
                 try {
@@ -437,14 +465,185 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
             //Agregar un producto al carrito 
-            agregarProductoCarrito: async (productoId, cantidad) => { 
-                
-                
+            agregarProductoCarrito: async (productoId, cantidad = 1) => {
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
                 try {
-                    
-                } catch (error) { 
+                    const token = getStore().token;
+
+                    const response = await fetch(`${baseUrl}api/carrito`, {
+                        method: 'POST',
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ product_id: productoId, cantidad })
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Error al agregar al Carrito:", errorData);
+                        throw new Error(errorData.error || 'Error al agregar Producto');
+                    }
+                    const data = await response.json()
+                    console.log("error en agregar", data)
+
+                    console.log("error aqui ", data)
+                    await getActions().verCarrito();
+
+                    return data
+                } catch (error) {
                     console.error("Error al agregar producto al carrito:", error);
-                    
+                    throw error
+                }
+            },
+            //Ver Carrito 
+            verCarrito: async () => {
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                try {
+                    const token = getStore().token;
+                    const response = await fetch(`${baseUrl}api/carrito`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    })
+                    if (!response.ok) {
+                        const errorData = await response.json()
+                        console.log('Error al ver Carrito', errorData)
+                        throw new Error(errorData.message || 'Error al ver Producto')
+                    }
+                    const data = await response.json()
+                    let store = getStore()
+                    setStore({ ...store, carrito: data || [] })
+                } catch (error) {
+                    console.log('Errro al obtener carrito', error)
+
+                }
+            },
+            //Eliminar un producto del carrito por su id
+            eliminarProductoCarrito: async (carritoId) => {
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                carritoId = carritoId || getStore().carrito?.id || localStorage.getItem('id')
+                if (!carritoId) {
+                    console.error("No se proporciono un ID valido", carritoId)
+                    return;
+                }
+                try {
+                    const token = getStore().token;
+                    const response = await fetch(`${baseUrl}api/delete_carrito/${carritoId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json()
+                        console.error("Error al Eliminar Producto del Carrito:", errorData);
+                        throw new Error(errorData.error || 'error al Elinar el usuario')
+                    }
+                    console.log("Producto en Carrito no Encontrado:", carritoId)
+                    const store = getStore()
+                    console.log("Store antes de eliminar el prodcuto del carrito", store)
+                    if (Array.isArray(store.carrito)) {
+                        setStore({
+                            ...store,
+                            carrito: store.carrito.filter(carrito => carrito.id !== carritoId),
+                            message: 'Producto del Carrito eliminado'
+                        })
+                    }
+                    if (store.carrito && store.carrito.id === carritoId) {
+                        setStore({
+                            ...store,
+                            carrito: null,
+                            message: 'Producto eliminado exitosamente'
+                        })
+                    }
+
+                } catch (error) {
+                    console.error("Error al eliminar producto", error)
+                    const store = getStore();
+                    setStore({ ...store, message: error.message || "Error al eliminar el producto" });
+                }
+            },
+            //Editar el Producto del Carrito 
+            reducirCantidadCarrito: async (carrito_id, cantidadActual) => {
+                const nuevaCantidad = cantidadActual - 1;
+                const token = getStore().token;
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+
+                try {
+                    const response = await fetch(`${baseUrl}api/carrito/${carrito_id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ cantidad: nuevaCantidad })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || "Error al reducir cantidad");
+                    }
+
+                    const data = await response.json();
+                    console.log(data.message || data.msg);
+                    await getActions().verCarrito(); // refresca el carrito
+                } catch (error) {
+                    console.error("Error al reducir cantidad:", error.message);
+                }
+            },
+            //Eliminar Carrito Completo 
+            vaciarCarrito: async () => {
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const token = getStore().token;
+
+                try {
+                    const response = await fetch(`${baseUrl}api/carrito`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Error al vaciar el carrito');
+                    }
+
+                    console.log("✅ Carrito vaciado exitosamente");
+                    setStore({
+                        ...getStore(),
+                        carrito: [] // limpia visualmente
+                    });
+
+                } catch (error) {
+                    console.error("❌ Error al vaciar el carrito:", error.message);
+                }
+            },
+            getUsuario: async () => {
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                try {
+                    const token = getStore().token;
+                    const response = await fetch(`${baseUrl}api/user`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Error al obtener el usuario:", errorData);
+                        throw new Error(errorData.error || 'Error al obtener el usuario');
+                    }
+                    const data = await response.json();
+                    console.log("Usuario encontrado:", data); 
+                    const store = getStore();
+                    setStore({ ...store, user: data });
+                } catch (error) {
+                    console.error("Error al obtener el usuario:", error);
+                    return null;
                 }
             },
             //Log out de usuario o administrador 
@@ -460,6 +659,26 @@ const getState = ({ getStore, getActions, setStore }) => {
                     token: null
                 });
             },
+            syncTokenFromLocalStorage: () => { //Esto recupera el token y usuario al iniciar:
+                const token = localStorage.getItem("token");
+                const name = localStorage.getItem("name");
+                const email = localStorage.getItem("email");
+                const role = localStorage.getItem("role");
+                const id = localStorage.getItem("id");
+
+                if (token && role) {
+                    setStore({
+                        token: token,
+                        user: {
+                            name: name,
+                            email: email,
+                            role: role,
+                            id: id
+                        },
+                        message: "Sesión restaurada desde localStorage"
+                    });
+                }
+            }
         }
     }
 }

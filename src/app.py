@@ -14,12 +14,14 @@ from flask_jwt_extended import JWTManager
 from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_cors import CORS 
+ 
+
 
 # from models import Person
 app = Flask(__name__)   
 CORS(app, resources={r"/api/*": {"origins": "https://redesigned-halibut-6949wqj5p44xfrx46-5173.app.github.dev/"}})
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'uploads')
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../uploads')
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -88,3 +90,10 @@ def uploaded_file(filename):
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=3245, debug=True) 
+
+
+
+
+
+
+  

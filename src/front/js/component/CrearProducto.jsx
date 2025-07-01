@@ -1,6 +1,7 @@
 import React,{useState,useContext}from 'react' 
 import { useNavigate } from 'react-router-dom'
-import { Context } from '../store/appContext.jsx'
+import { Context } from '../store/appContext.jsx' 
+import swal from 'sweetalert'
 
 const CrearProducto = () => {  
     const [name, setName] = useState('')
@@ -11,14 +12,28 @@ const CrearProducto = () => {
     const { actions,store } = useContext(Context) 
     const [error, setError] = useState('')
 
-    const navigate = useNavigate() 
+    const navigate = useNavigate()  
+    
+    const resetForm = () => {
+    setName('');
+    setPrecio('');
+    setDescripcion('');
+    setImagen('');
+    setCantidad('');
+};
 
     const handleSubmit = async (e) => { 
         e.preventDefault() 
         await actions.crearProducto(name, descripcion, precio, imagen, cantidad) 
 
-        if(store.producto){ 
+        if(store.producto){  
+            swal("Producto creado", "El producto ha sido creado correctamente", "success"); 
+            resetForm(); // Limpiar los campos después de crear
+
             navigate("/crearProducto") 
+        }else{ 
+            swal("Error al crear el producto", "Por favor, verifica los datos ingresados", "error");
+            setError("Error al crear el producto. Por favor, verifica los datos ingresados.");
         }
     }
 
