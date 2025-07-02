@@ -10,6 +10,8 @@ const EditUsuario = () => {
     const [userData, setUserData] = useState({
         name: store.user?.name || '',
         email: store.user?.email || '',
+        telefono: store.user?.telefono || '', // Asegúrate de que este campo sea correcto
+        direccion: store.user?.direccion || '', // Asegúrate de que este campo sea
         password: store.user?.password || '',
 
     });
@@ -18,7 +20,7 @@ const EditUsuario = () => {
     let role = admin || user;
 
     //Eliminar usuario para que admin elimine tmabien 
-    const eliminarMe =async () => {
+    const eliminarMe = async () => {
         const userId = store.user?.id || localStorage.getItem("id");
         const confirmar = await swal({
             title: "¿Estás seguro?",
@@ -31,7 +33,7 @@ const EditUsuario = () => {
         if (confirmar) {
             try {
                 await actions.eliminarUsuario(userId);
-                swal("Usuario eliminado", "Tu cuenta ha sido eliminada correctamente", "success"); 
+                swal("Usuario eliminado", "Tu cuenta ha sido eliminada correctamente", "success");
                 await actions.logout(); // Cerrar sesión después de eliminar la cuenta
                 navigate("/"); // Redirigir a la página de inicio
             } catch (error) {
@@ -40,11 +42,6 @@ const EditUsuario = () => {
             }
         }
     };
-
-
-
-
-
 
     const handleEdit = () => setIsEditing(!isEditing)
 
@@ -59,7 +56,7 @@ const EditUsuario = () => {
             }
             await actions.editarUsuario(userData, store.user?.id || localStorage.getItem("id")); //aqui llamo el id 
             setIsEditing(false);
-        } catch (error) { 
+        } catch (error) {
             swal("Error", "No se pudo editar el usuario", "error");
             console.error("Error al editar el usuario:", error);
         }
@@ -68,14 +65,26 @@ const EditUsuario = () => {
     useEffect(() => {
         if (store.user) {
             setUserData({
-                name: store.user.name || localStorage.getItem("name") || '', //Para mostrar los valores actuales cuando no estás editando, puedes dejarlos asi con local storage
-                email: store.user.email || localStorage.getItem("email") || '',
+                name: store.user.name || localStorage.getItem("user_name") || '', //Para mostrar los valores actuales cuando no estás editando, puedes dejarlos asi con local storage
+                email: store.user.email || localStorage.getItem("user_email") || '',
+                telefono: store.user.telefono || JSON.parse(localStorage.getItem("user"))?.telefono || '', // 🔧 Cambiado
+                direccion: store.user.direccion || JSON.parse(localStorage.getItem("user"))?.direccion || '', // 🔧 Cambiado
                 password: store.user.password || ''
             })
         }
     }, [store.user]);
-    let name = store.user?.name || localStorage.getItem("name");
-    let email = store.user?.email || localStorage.getItem("email");
+    let name = store.user?.name || localStorage.getItem("user_name");
+    let email = store.user?.email || localStorage.getItem("user_email");
+    let telefono = store.user?.telefono || JSON.parse(localStorage.getItem("user"))?.telefono; // 🔧 Cambiado
+    let direccion = store.user?.direccion || JSON.parse(localStorage.getItem("user"))?.direccion; // 🔧 Cambiado
+
+
+    console.log("store.user:", store.user);
+  const userStorage = JSON.parse(localStorage.getItem("user"));
+console.log("localStorage telefono:", userStorage?.telefono);
+console.log("localStorage direccion:", userStorage?.direccion);
+    console.log("localStorage user:", localStorage.getItem("user"));
+
     return (
         <div style={{ paddingTop: '10px', display: 'flex', justifyContent: 'center' }}>
             {/* //Informacion */}
@@ -89,18 +98,26 @@ const EditUsuario = () => {
                     <strong>Email:</strong>
                     {isEditing ? <input type='email' name='email' value={userData.email} onChange={handleChange} /> : email}
                 </p>
+                <p>
+                    <strong>Telefono:</strong>
+                    {isEditing ? <input type='number' name='telefono' value={userData.telefono} onChange={handleChange} /> : telefono}
+                </p>
+                <p>
+                    <strong>Direccion: </strong>
+                    {isEditing ? <input type='direccion' name='direccion' value={userData.direccion} onChange={handleChange} /> : direccion}
+                </p>
                 {/* <p> 
                 <strong>Password:</strong> 
                 {isEditing ? <input type='password' name='password' value={userData.password} onChange={handleChange}/>: password}</p> */}
             </div>
             {/* Botones de Editar y Guardar */}
             <div className='Botones' style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "10px"
-          }}>
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px"
+            }}>
                 {isEditing ? (
                     <>
                         <button className='btn btn-success' onClick={handleSave}>Guardar</button>

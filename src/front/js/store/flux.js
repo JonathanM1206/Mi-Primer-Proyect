@@ -21,7 +21,7 @@ const getState = ({ getStore, getActions, setStore }) => {
         },
         actions: {
             //Registrar un usuario
-            registroUsuario: async (name, email, password) => {
+            registroUsuario: async (name, email, telefono, direccion, password) => {
                 const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
@@ -31,7 +31,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                             "Content-Type": "application/json",
                             Authorization: `Bearer ${token}`
                         },
-                        body: JSON.stringify({ name, email, password })
+                        body: JSON.stringify({ name, email, telefono, direccion, password })
                     })
                     if (!response.ok) {
                         let errorMessage = 'Algo salió mal. Intenta de nuevo.';
@@ -50,17 +50,21 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.log("Datos de usuario Registrado:", data);
 
                     let store = getStore();
-                    setStore({ ...store, user: { name: data.name, email: data.email, role: data.role, id: data.id, password }, users: [...getStore().users, { name, email, password }], token: data.access_token, message: 'Usuario registrado exitosamente' });
+                    setStore({ ...store, user: { name: data.name, email: data.email, telefono: data.telefono, direccion: data.direccion, role: data.role, id: data.id, password }, users: [...getStore().users, { name, email, password }], token: data.access_token, message: 'Usuario registrado exitosamente' });
                     localStorage.setItem("token", data.access_token);
                     localStorage.setItem("role", data.role);
                     localStorage.setItem("email", data.email);
                     localStorage.setItem("id", data.id);
                     localStorage.setItem("name", data.name);
+                    localStorage.setItem("telefono", data.telefono); // Asegúrate de que este campo sea correcto 
+                    localStorage.setItem("direccion", data.direccion); // Asegúrate de que este campo sea correcto
                     localStorage.setItem("user", JSON.stringify({
                         name: data.name,
                         email: data.email,
+                        telefono: data.telefono,
+                        direccion: data.direccion,
                         role: data.role,
-                        user_id: data.id
+                        id: data.id
                     }));
                     console.log("Usuario", data);
 
@@ -91,17 +95,19 @@ const getState = ({ getStore, getActions, setStore }) => {
                     let store = getStore();
                     setStore({
                         ...store,
-                        user: { name: data.name, email: data.email, role: data.role },//agregar el id y el role del usuario con emnail
+                        user: { name: data.name, email: data.email, telefono: data.telefono, direccion: data.direccion, role: data.role, id: data.id },//agregar el id y el role del usuario con emnail
                         token: data.access_token,
                         message: 'Usuario logueado exitosamente'
                     })
                     // Guardar datos en localStorage
                     localStorage.setItem("token", data.access_token);
-                    localStorage.setItem("user", JSON.stringify({ name: data.name, email: data.email, role: data.role, user_id: data.user_id })); // Asegúrate de incluir todas las propiedades que necesitas, como 'name' que viene en 'data' del backend
-                    localStorage.setItem("name", data.name);
-                    localStorage.setItem("email", data.email);
-                    localStorage.setItem("id", data.id);
+                    localStorage.setItem("user", JSON.stringify({ name: data.name, email: data.email, role: data.role, id: data.id, telefono: data.telefono, direccion: data.direccion })); // Asegúrate de incluir todas las propiedades que necesitas, como 'name' que viene en 'data' del backend
+                    localStorage.setItem("user_name", data.name);
+                    localStorage.setItem("user_email", data.email);
+                    localStorage.setItem("user_id", data.id);
                     localStorage.setItem("role", data.role);
+                    localStorage.setItem("user_telefono", data.telefono); // Asegúrate de que este campo sea correcto 
+                    localStorage.setItem("user_direccion", data.direccion); // Asegúrate de que este campo sea correcto
 
                     console.log("Usuario logueado:", data);
                 } catch (error) {
@@ -130,10 +136,16 @@ const getState = ({ getStore, getActions, setStore }) => {
                         throw new Error(errorData.error || 'Error al editar el usuario');
                     }
                     console.log("Usuario editado exitosamente");
-                    localStorage.setItem('name', userBody.name);
-                    localStorage.setItem('email', userBody.email);
+                    localStorage.setItem('user', JSON.stringify({
+                        name: userBody.name,
+                        email: userBody.email,
+                        telefono: userBody.telefono, // Asegúrate de que este campo sea correcto 
+                        direccion: userBody.direccion, // Asegúrate de que este campo sea correcto
+                        role: getStore().user.role,
+                        id: userId // 🔑 Este es el ID que debe estar aquí
+                    }));
                     let store = getStore();
-                    setStore({ ...store, user: { ...getStore().user, name: userBody.name, email: userBody.email }, message: 'Usuario editado exitosamente' });
+                    setStore({ ...store, user: { ...getStore().user, name: userBody.name, email: userBody.email, id: userId, telefono: userBody.telefono, direccion: userBody.direccion }, message: 'Usuario editado exitosamente' });
                     return true;
 
                 } catch (error) {
@@ -211,10 +223,11 @@ const getState = ({ getStore, getActions, setStore }) => {
                     // Guardar datos en localStorage
                     localStorage.setItem("token", data.access_token);
                     localStorage.setItem("role", data.role);
-                    localStorage.setItem("email", data.email);
-                    localStorage.setItem("name", data.name);
-                    localStorage.setItem("id", data.id);
-                    localStorage.setItem("admin", JSON.stringify({ name: data.name, email: data.email, role: data.role, admin_id: data.admin_id })); // Asegúrate de incluir todas las propiedades que necesitas, como 'name' que viene en 'data' del backend
+                    localStorage.setItem("admin_email", data.email);
+                    localStorage.setItem("admin_name", data.name);
+                    localStorage.setItem("admin_id", data.id);
+                    localStorage.setItem("telefono", data.telefono); // Asegúrate de que este campo sea correcto
+                    localStorage.setItem("admin", JSON.stringify({ name: data.name, email: data.email, role: data.role, id: data.id, telefono: data.telefono })); // Asegúrate de incluir todas las propiedades que necesitas, como 'name' que viene en 'data' del backend
                     console.log("Administrador logueado:", data);
                 } catch (error) {
                     console.error("Error al iniciar sesión:", error);
@@ -235,75 +248,155 @@ const getState = ({ getStore, getActions, setStore }) => {
                             'Content-Type': 'application/json',
                             Authorization: `Bearer ${token}`
                         },
-                    })
+                    });
                     if (!response.ok) {
                         const errorData = await response.json();
                         throw new Error(errorData.error || 'Error al editar el administrador');
                     }
                     console.log("Administrador editado exitosamente");
-                    localStorage.setItem('name', adminBody.name);
-                    localStorage.setItem('email', adminBody.email);
-                    localStorage.setItem('id', adminId); // Guardar el id del administrador editado
+
+                    // 🔥 Guardar el admin actualizado en el localStorage (objeto completo)
+                    localStorage.setItem('admin', JSON.stringify({
+                        name: adminBody.name,
+                        email: adminBody.email,
+                        role: getStore().admin.role,
+                        id: adminId // 🔑 Este es el ID que debe estar aquí
+                    }));
+
                     let store = getStore();
-                    setStore({ ...store, admin: { ...getStore().admin, name: adminBody.name, email: adminBody.email }, message: 'Administrador editado exitosamente' });
+                    setStore({
+                        ...store,
+                        admin: { ...getStore().admin, name: adminBody.name, email: adminBody.email, id: adminId },
+                        message: 'Administrador editado exitosamente'
+                    });
                     return true;
 
                 } catch (error) {
                     console.error("Error al editar el administrador:", error);
                 }
-
             },
-            //Crear un producto 
-            crearProducto: async (name, descripcion, precio, imagen, cantidad) => {
-                console.log("Creando producto", name, descripcion, precio, imagen, cantidad)
-
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/'
+            //Admin Elimina Usuario 
+            eliminarUsuarioAdmin: async (userId) => {
 
                 try {
-                    const formData = new FormData()
-                    formData.append("name", name)
-                    formData.append("descripcion", descripcion)
-                    formData.append("precio", parseFloat(precio)) // 🔧 importante
-                    console.log("precio antes de agregar al FormData:", precio)
-                    formData.append("imagen", imagen) // tipo File
-                    formData.append("cantidad", parseInt(cantidad)) // 🔧 importante
-                    console.log("FormData creado:", formData)
-
-                    const token = getStore().token // Asegurate que aquí está el token correcto
-                    if (!token) throw new Error("Token no disponible, logueate de nuevo")
-
-                    const response = await fetch(`${baseUrl}api/producto`, {
-                        method: 'POST',
+                    const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                    const token = getStore().token;
+                    console.log("Eliminando usuario con ID:", userId);
+                    console.log("Token de autenticación:", token);
+                    const response = await fetch(`${baseUrl}api/admin/delete_user/${userId}`, {
+                        method: 'DELETE',
                         headers: {
-                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
                         },
-                        body: formData
-                    })
-
-                    console.log("Respuesta del servidor:", response)
-
+                    });
                     if (!response.ok) {
-                        const errorData = await response.json()
-                        console.error("Error al agregar producto:", errorData)
-                        throw new Error(errorData.msg || 'Error al agregar producto')
+                        const errorData = await response.json();
+                        console.error("Error al eliminar el usuario:", errorData);
+                        throw new Error(errorData.error || 'Error al eliminar el usuario');
+                    }
+                    console.log("Usuario eliminado exitosamente:", userId);
+                    const store = getStore();
+                    console.log("Store antes de eliminar el usuario:", store);
+                    if (Array.isArray(store.users)) {
+                        setStore({
+                            ...store,
+                            users: store.users.filter(user => user.id !== userId),
+                            message: 'Usuario eliminado exitosamente'
+                        });
+                    }
+                    if (store.user && store.user.id === parseInt(userId)) {
+                        localStorage.removeItem("token");
+                        setStore({ user: null, token: null, message: 'Usuario eliminado exitosamente' });
                     }
 
-                    const data = await response.json()
-                    console.log("Producto creado exitosamente:", data)
+                } catch (error) {
+                    console.error("Error al eliminar el usuario:", error);
+                }
+            }
+            ,
+            //editar un producto por su id
+            editarProducto: async (productoBody, productoId, nuevaImagen = null) => {
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                try {
+                    const token = getStore().token;
 
-                    let store = getStore()
+                    // Si hay nueva imagen, usar FormData; si no, usar JSON
+                    let requestOptions;
+
+                    if (nuevaImagen) {
+                        // Usar FormData cuando hay nueva imagen
+                        const formData = new FormData();
+                        formData.append("name", productoBody.name);
+                        formData.append("descripcion", productoBody.descripcion);
+                        formData.append("precio", productoBody.precio.toString());
+                        formData.append("cantidad", productoBody.cantidad.toString());
+                        formData.append("imagen", nuevaImagen); // El archivo de imagen
+
+                        requestOptions = {
+                            method: 'PUT',
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                                // NO incluir Content-Type cuando usas FormData
+                            },
+                            body: formData
+                        };
+                    } else {
+                        // Usar JSON cuando no hay nueva imagen
+                        requestOptions = {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`
+                            },
+                            body: JSON.stringify(productoBody)
+                        };
+                    }
+
+                    const response = await fetch(`${baseUrl}api/edit_producto/${productoId}`, requestOptions);
+
+                    console.log('Respuesta del servidor:', response);
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Error al editar el producto:", errorData);
+                        throw new Error(errorData.error || errorData.msg || 'Error al editar el producto');
+                    }
+
+                    const data = await response.json();
+                    console.log("Producto editado exitosamente:", data);
+
+                    // Actualizar localStorage
+                    localStorage.setItem('producto_name', productoBody.name);
+                    localStorage.setItem('producto_descripcion', productoBody.descripcion);
+                    localStorage.setItem('producto_precio', productoBody.precio);
+                    localStorage.setItem('producto_cantidad', productoBody.cantidad);
+
+                    // Actualizar imagen en localStorage si hay datos del servidor
+                    if (data.producto && data.producto.imagen) {
+                        localStorage.setItem('producto_imagen', data.producto.imagen);
+                    }
+
+                    // Actualizar el store
+                    let store = getStore();
                     setStore({
                         ...store,
-                        productos: [...store.productos, data],
-                        message: 'Producto creado exitosamente'
-                    })
+                        producto: {
+                            ...getStore().producto,
+                            name: productoBody.name,
+                            descripcion: productoBody.descripcion,
+                            precio: productoBody.precio,
+                            cantidad: productoBody.cantidad,
+                            imagen: data.producto ? data.producto.imagen + "?t=" + new Date().getTime() : productoBody.imagen
+                        },
+                        message: 'Producto editado exitosamente'
+                    });
 
-                    localStorage.setItem("producto", JSON.stringify(data)) // Opcional, si lo necesitás 
-                    console.log("Producto guardado en localStorage:", data)
+                    return true;
 
                 } catch (error) {
-                    console.error("Error al agregar producto", error)
-                    setStore({ ...getStore(), message: error.message })
+                    console.error("Error al editar el producto:", error);
+                    throw error; // Re-lanzar el error para que lo maneje el componente
                 }
             },
             //Ver todos los productos 
@@ -417,51 +510,58 @@ const getState = ({ getStore, getActions, setStore }) => {
                     setStore({ ...store, message: error.message || "Error al eliminar el producto" });
                 }
             },
-            //editar un producto por su id
-            editarProducto: async (productoBody, productoId) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+           
+           //Crear un producto 
+            crearProducto: async (name, descripcion, precio, imagen, cantidad) => {
+                console.log("Creando producto", name, descripcion, precio, imagen, cantidad)
+
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/'
+
                 try {
-                    const token = getStore().token;
-                    const response = await fetch(`${baseUrl}api/edit_producto/${productoId}`, {
-                        method: 'PUT',
+                    const formData = new FormData()
+                    formData.append("name", name)
+                    formData.append("descripcion", descripcion)
+                    formData.append("precio", parseFloat(precio)) // 🔧 importante
+                    console.log("precio antes de agregar al FormData:", precio)
+                    formData.append("imagen", imagen) // tipo File
+                    formData.append("cantidad", parseInt(cantidad)) // 🔧 importante
+                    console.log("FormData creado:", formData)
+
+                    const token = getStore().token // Asegurate que aquí está el token correcto
+                    if (!token) throw new Error("Token no disponible, logueate de nuevo")
+
+                    const response = await fetch(`${baseUrl}api/producto`, {
+                        method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`
+                            Authorization: `Bearer ${token}`,
                         },
-                        body: JSON.stringify(productoBody)
+                        body: formData
                     })
-                    console.log('Respuesta del servidor:', response);
+
+                    console.log("Respuesta del servidor:", response)
+
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        console.error("Error al editar el producto:", errorData);
-                        throw new Error(errorData.error || 'Error al editar el producto');
+                        const errorData = await response.json()
+                        console.error("Error al agregar producto:", errorData)
+                        throw new Error(errorData.msg || 'Error al agregar producto')
                     }
 
-                    console.log("Producto editado exitosamente");
-                    const data = await response.json();
-                    console.log("Datos del producto editado:", data);
-                    localStorage.setItem('name', productoBody.name);
-                    localStorage.setItem('descripcion', productoBody.descripcion);
-                    localStorage.setItem('precio', productoBody.precio);
-                    localStorage.setItem('cantidad', productoBody.cantidad);
-                    localStorage.setItem('imagen', productoBody.imagen); // Asegúrate de que este campo sea correcto 
-                    let store = getStore();
-                    setStore({
-                        ...store, producto: {
-                            ...getStore().producto,
-                            name: productoBody.name,
-                            descripcion: productoBody.descripcion,
-                            precio: productoBody.precio,
-                            cantidad: productoBody.cantidad,
-                            imagen: productoBody.imagen
-                        },
-                        message: 'Producto editado exitosamente'
-                    })
-                    console.log("Producto editado exitosamente:", data);
+                    const data = await response.json()
+                    console.log("Producto creado exitosamente:", data)
 
-                    return true;
+                    let store = getStore()
+                    setStore({
+                        ...store,
+                        productos: [...store.productos, data],
+                        message: 'Producto creado exitosamente'
+                    })
+
+                    localStorage.setItem("producto", JSON.stringify(data)) // Opcional, si lo necesitás 
+                    console.log("Producto guardado en localStorage:", data)
+
                 } catch (error) {
-                    console.error("Error al editar el producto:", error);
+                    console.error("Error al agregar producto", error)
+                    setStore({ ...getStore(), message: error.message })
                 }
             },
             //Agregar un producto al carrito 
@@ -638,7 +738,6 @@ const getState = ({ getStore, getActions, setStore }) => {
                         throw new Error(errorData.error || 'Error al obtener el usuario');
                     }
                     const data = await response.json();
-                    console.log("Usuario encontrado:", data); 
                     const store = getStore();
                     setStore({ ...store, user: data });
                 } catch (error) {
@@ -652,33 +751,52 @@ const getState = ({ getStore, getActions, setStore }) => {
                 localStorage.removeItem("user");
                 localStorage.removeItem("token");
                 localStorage.removeItem("role");
-
+                localStorage.removeItem("carrito");
                 setStore({
                     admin: null,
                     user: null,
-                    token: null
+                    token: null,
+                    carrito: [],
+                    message: "Sesión cerrada exitosamente"
                 });
             },
-            syncTokenFromLocalStorage: () => { //Esto recupera el token y usuario al iniciar:
+            syncTokenFromLocalStorage: () => {
                 const token = localStorage.getItem("token");
-                const name = localStorage.getItem("name");
-                const email = localStorage.getItem("email");
                 const role = localStorage.getItem("role");
-                const id = localStorage.getItem("id");
 
-                if (token && role) {
+                // Recuperar usuario
+                const user = JSON.parse(localStorage.getItem("user"));
+
+                // Recuperar administrador
+                const admin = JSON.parse(localStorage.getItem("admin"));
+
+                if (token && role && user && role === "user") {
+                    // Si es usuario normal
                     setStore({
                         token: token,
                         user: {
-                            name: name,
-                            email: email,
-                            role: role,
-                            id: id
+                            name: user.name,
+                            email: user.email,
+                            role: user.role,
+                            id: user.id // 👈 Asegúrate que este sea el id correcto que guardaste
                         },
-                        message: "Sesión restaurada desde localStorage"
+                        message: "Sesión de usuario restaurada desde localStorage"
+                    });
+                } else if (token && role && admin && role === "admin") {
+                    // Si es administrador
+                    setStore({
+                        token: token,
+                        admin: {
+                            name: admin.name,
+                            email: admin.email,
+                            role: admin.role,
+                            id: admin.id // 👈 Asegúrate que este sea el id correcto que guardaste
+                        },
+                        message: "Sesión de administrador restaurada desde localStorage"
                     });
                 }
             }
+
         }
     }
 }

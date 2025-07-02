@@ -58,8 +58,8 @@ def create_user():
     data= request.get_json()
     try:
         #Validacion de Campos requeridos 
-        if not data.get('email') or not data.get('name') or not data.get('password'): 
-            return jsonify({'error':'Email, Name and Password are required'}),400 
+        if not data.get('email') or not data.get('name') or not data.get('password') or not data.get('direccion') or not data.get('telefono'): 
+            return jsonify({'error':'Email, Name ,Direction,Telephone and  Password are required'}),400 
         
         #Verificar si el usuario ya existe  
         existing_user=User.query.filter_by(email=data.get('email')).first() 
@@ -73,6 +73,8 @@ def create_user():
         new_user=User( 
             name=data.get('name'), 
             email=data.get('email'), 
+            direccion=data.get('direccion'), 
+            telefono=data.get('telefono'), 
             password=password_hash
         )
         #Guardar usuario en la base de datos 
@@ -83,7 +85,9 @@ def create_user():
         ok_to_share={ 
             "id":new_user.user_id, 
             "name":new_user.name, 
-             
+            "direccion":new_user.direccion,
+            "telefono":new_user.telefono, 
+            "role":new_user.role,
             "email":new_user.email
         } 
         
@@ -125,7 +129,9 @@ def get_token_user():
                 "email":login_user.email,  
                 "name":login_user.name,
                 "id":login_user.user_id, 
-                 "role":login_user.role,
+                "telefono":login_user.telefono, 
+                "direccion":login_user.direccion, 
+                "role":login_user.role,
                 "access_token":access_token
             } 
             return jsonify(user_data),200 
@@ -187,15 +193,21 @@ def edit_user(user_id):
     if not user: 
         return jsonify({'error':'Usuario no encontrado'}),400 
     
-    data=request.json 
+    data=request.json
     if "name" in data: 
         user.name=data["name"] 
     if "email" in data: 
-        user.email=data["email"]
+        user.email=data["email"] 
+    if "direccion" in data: 
+        user.direccion=data["direccion"] 
+    if "telefono" in data: 
+        user.telefono=data["telefono"] 
+    if "foto_perfil" in data:
+        user.foto_perfil=data["foto_perfil"]
     if "password" in data: 
         password_hash=bcrypt.generate_password_hash(data.get('password')).decode('utf-8') 
-        user.password=password_hash 
-
+        user.password=password_hash  
+ 
     if not isinstance(data,dict): 
         return jsonify({'error':'Los datos deben ser un diccionario'}),400 
     
@@ -235,6 +247,7 @@ def create_admin():
         new_admin=Administrador( 
             name=data.get('name'), 
             email=data.get('email'), 
+          
             password=password_hash
         )
         #Guardar usuario en la base de datos 
@@ -246,7 +259,8 @@ def create_admin():
             "id":new_admin.admin_id, 
             "name":new_admin.name,
             "role":new_admin.role, 
-            "email":new_admin.email
+            "email":new_admin.email,
+           
         } 
         
         return jsonify({"Administrador Creado":ok_to_share}),201 
@@ -328,7 +342,17 @@ def edit_admin(admin_id):
     if "name" in data: 
         admin.name=data["name"] 
     if "email" in data: 
-        admin.email=data["email"] 
+       # Verificar si el email ya existe en otro admin distinto a este
+        existing_admin = Administrador.query.filter(
+            Administrador.email == data["email"],
+            Administrador.admin_id != admin_id  # Excluir al admin que editamos
+        ).first()
+        if existing_admin:
+            return jsonify({'error': 'Email ya está en uso por otro administrador'}), 400
+        admin.email = data["email"] 
+ 
+    if "foto_perfil" in data: 
+        admin.foto_perfil = data["foto_perfil"]
     if "password" in data: 
         password_hash =bcrypt.generate_password_hash(data.get('password')).decode('utf-8') 
         admin.password=password_hash 
@@ -342,7 +366,27 @@ def edit_admin(admin_id):
         db.session.rollback() 
         return jsonify({"error":str(e)}),500
 
+#Admin Elimina Usuario 
+@api.route('/admin/delete_user/<int:user_id>', methods=['DELETE'])
+@jwt_required()
+def admin_delete_user(user_id):
+    claims = get_jwt()
+    admin_id = get_jwt_identity()
 
+    if claims.get('role') != 'admin':
+        return jsonify({'error': 'Acceso denegado. Solo los administradores pueden eliminar usuarios.'}), 403
+
+    if user_id == admin_id:
+        return jsonify({'error': 'No puedes eliminar tu propia cuenta desde esta ruta.'}), 403
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado.'}), 404
+
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({'msg': 'Usuario eliminado exitosamente por el administrador.'}), 200
 #Agregar Producto 
 @api.route('/producto',methods=['POST']) 
 @jwt_required() #obliga a que el usuario esté logueado
@@ -416,7 +460,7 @@ def get_producto(product_id):
         return jsonify({'error':'Producto no encontrado'}),404 
     
     return jsonify(product.serialize()),200     
-#Edit Producto con PUT
+#Editar Producto PUT  
 @api.route('/edit_producto/<int:product_id>', methods=['PUT'])
 @jwt_required()
 def edit_producto(product_id):
@@ -430,51 +474,69 @@ def edit_producto(product_id):
     if not product:
         return jsonify({"error": "Producto no encontrado"}), 400
 
-    # Ahora validamos si viene JSON o formulario con archivoporquew tan complicasdo solo para subir una imagen que se reconozca por el nombre ?
+    # Detectar si es FormData (con archivo) o JSON
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        data = request.form.to_dict()
 
-    if 'file' in request.files:
-        file = request.files['file']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            # Guardamos el archivo en la carpeta uploads 
-            print("Guardando imagen en:", os.path.join(UPLOAD_FOLDER, filename))
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
-            # Guardamos el nombre o path en el producto (puede ser solo el filename)
-            product.imagen = filename
-        else:
-            return jsonify({'error': 'Archivo no permitido'}), 400
+        if 'imagen' in request.files:
+            file = request.files['imagen']
+            if file and file.filename != '' and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                import time
+                timestamp = str(int(time.time()))
+                filename = f"{timestamp}_{filename}"
 
-    # Los demás campos vienen en request.form o en JSON (según el cliente)
-    data = request.form.to_dict()  # si viene formulario con archivo, los datos vienen acá
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(file_path)
 
-    # Si no hay datos en formulario, intenta JSON
-    if not data:
+                product.imagen = f"{filename}"
+            elif file and file.filename != '':
+                return jsonify({'error': 'Archivo no permitido'}), 400
+        # Si no hay imagen nueva, dejamos la actual sin cambios
+
+    else:
         data = request.json
+        if not isinstance(data, dict):
+            return jsonify({'error': "Los datos deben ser un diccionario"}), 400
 
-    if not isinstance(data, dict):
-        return jsonify({'error': "Los datos deben ser un diccionario"}), 400
-
-    if "name" in data:
+    # Actualizamos campos (validando que existan y no estén vacíos)
+    if "name" in data and data["name"]:
         product.name = data['name']
-    if "precio" in data:
+
+    if "precio" in data and data["precio"]:
         try:
             product.precio = float(data['precio'])
         except ValueError:
             return jsonify({'error': 'El precio debe ser un número'}), 400
-    if "cantidad" in data:
+
+    if "cantidad" in data and data["cantidad"]:
         try:
             product.cantidad = int(data['cantidad'])
         except ValueError:
             return jsonify({'error': 'La cantidad debe ser un entero'}), 400
-    if "descripcion" in data:
+
+    if "descripcion" in data and data["descripcion"]:
         product.descripcion = data['descripcion']
 
     try:
         db.session.commit()
-        return jsonify({'message': 'El Producto se actualizó correctamente'}), 200
+
+        return jsonify({
+            'message': 'El Producto se actualizó correctamente',
+            'producto': {
+                'product_id': product.product_id,
+                'name': product.name,
+                'descripcion': product.descripcion,
+                'precio': product.precio,
+                'cantidad': product.cantidad,
+                'imagen': product.imagen
+            }
+        }), 200
+
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
 #DELETE Producto 
 @api.route('/delete_producto/<int:product_id>',methods=['DELETE']) 
 @jwt_required()  # 👈 obliga a que el usuario esté logueado
@@ -496,7 +558,7 @@ def delete_producto(product_id):
 @jwt_required() 
 def agregar_a_carrito(): 
     data = request.get_json() 
-    user_id = get_jwt_identity()  # ID del usuario que hace la petición
+    user_id = get_jwt_identity()  # ID del usuario que hace la petición 
     product_id = data.get('product_id') 
     cantidad = data.get('cantidad', 1) 
 
@@ -509,7 +571,7 @@ def agregar_a_carrito():
         return jsonify({'error': 'Producto no encontrado'}), 400 
     
     # Buscamos si el producto ya está en el carrito del usuario
-    carrito_item = Carrito.query.filter_by(user_id=user_id, product_id=product_id).first()
+    carrito_item = Carrito.query.filter_by(user_id=user_id,product_id=product_id).first()
 
     if carrito_item:
         # Si ya existe, sumamos las cantidades
@@ -611,24 +673,8 @@ def vaciar_carrito_completo():
     Carrito.query.filter_by(user_id=user_id).delete()
     db.session.commit()
     return jsonify({"msg": "Todos los productos del carrito fueron eliminados"}), 200
- 
-# #DELETE un Producto del Carrito   
-# @api.route('/delete_producto_carrito/<int:carrito_id>/<int:product_id>',methods=['DELETE']) 
-# @jwt_required() 
-# def delete_producto_carrito(carrito_id,product_id): 
-#     user_id = get_jwt_identity()
- 
-#     carrito=Carrito.query.filter_by(carrito_id=carrito_id,product_id=product_id,user_id=user_id).first() 
-#     if not carrito:
-#      return jsonify('no se encontró el producto'), 404
-#     if carrito: 
 
-#          db.session.delete(carrito) 
-#          db.session.commit() 
-#          return jsonify("Producto eliminado del carrito") ,200 
-#     return jsonify('no se encontro el producto')
-
- #DELETE Prodcuto del  CARRITO 
+#DELETE Prodcuto del  CARRITO 
 @api.route('/delete_carrito/<int:carrito_id>',methods=["DELETE"])  
 @jwt_required() 
 def delete_carrito(carrito_id) : 

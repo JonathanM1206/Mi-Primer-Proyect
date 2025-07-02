@@ -7,7 +7,10 @@ class User(db.Model):
     __tablename__='user' 
     user_id=db.Column(db.Integer, primary_key=True) 
     name=db.Column(db.String(100),nullable=False) 
-    email=db.Column(db.String(100),unique=True, nullable=False) 
+    email=db.Column(db.String(100),unique=True, nullable=False)  
+    direccion=db.Column(db.String(100),nullable=False) 
+    telefono=db.Column(db.Integer, nullable=False, default=0)    
+    foto_perfil=db.Column(db.String(100),nullable=True)
     password=db.Column(db.String(100),nullable=False) 
     role=db.Column(db.String(100),nullable=False,default='user') 
     #Relaciones 
@@ -22,7 +25,10 @@ class User(db.Model):
         return { 
             "user_id":self.user_id, 
             "email":self.email, 
-            "name":self.name,
+            "name":self.name, 
+            "direccion":self.direccion, 
+            "telefono":self.telefono, 
+            "foto_perfil": f'/uploads/{self.foto_perfil}' if self.foto_perfil else None,
             "role":self.role
         } 
 
@@ -30,8 +36,9 @@ class Administrador (db.Model):
     __tablename__='admin' 
     admin_id=db.Column(db.Integer,primary_key=True) 
     name=db.Column(db.String(100),nullable=False) 
-    email=db.Column(db.String(100),unique=True, nullable=False)  
-    password=db.Column(db.String(100),nullable=False) 
+    email=db.Column(db.String(100),unique=True, nullable=False)   
+    foto_perfil=db.Column(db.String(100),nullable=True)
+    password=db.Column(db.String(100),nullable=False)  
     role=db.Column(db.String(100),nullable=False,default='admin')  
      #Relaciones 
     posts=db.relationship('Post',backref='admin',lazy=True) 
@@ -43,9 +50,11 @@ class Administrador (db.Model):
         return f'<Admininistrador {self.name}>' 
     def serialize(self): 
         return { 
-            "user_id":self.admin_id, 
+            "id":self.admin_id, 
             "email":self.email, 
-            "name":self.name,
+            "name":self.name, 
+          
+            "foto_perfil": f'/uploads/{self.foto_perfil}' if self.foto_perfil else None,
             "role":self.role
         }  
 
