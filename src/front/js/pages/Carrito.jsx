@@ -65,7 +65,7 @@ const Carrito = () => {
       return;
     }
     const confirmar = await swal({
-      title: "¿Estás seguro?",
+      title: "¿Estás seguro de Remover el Producto Completo?",
       text: "¡No podrás deshacer esta acción!",
       icon: "warning",
       buttons: true,

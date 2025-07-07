@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, jsonify, Blueprint   
-from api.models import db, User, Administrador, Product, Carrito, Post
+from api.models import db, User, Administrador, Product, Carrito, Post,Categoria
 from api.utils import APIException 
 from flask_cors import CORS 
 from flask_bcrypt import Bcrypt 
@@ -426,10 +426,14 @@ def crear_producto():
     try:
         cantidad = int(data['cantidad'])  #  también valida cantidad
     except ValueError:
-        return jsonify({'msg': 'La cantidad debe ser un número entero'}), 400
+        return jsonify({'msg': 'La cantidad debe ser un número entero'}), 400 
+    
+    categoria_id= data.get('categoria_id')  #  obtenemos la categoría del producto, si no se envía, será None
+    
     nuevo_producto=Product( 
         name=data['name'], 
         descripcion=data['descripcion'], 
+        categoria_id=categoria_id,  #  asignamos la categoría, puede ser None
         precio=precio, 
         imagen=filename, 
         cantidad=cantidad, 
@@ -690,3 +694,37 @@ def delete_carrito(carrito_id) :
         return jsonify("Carrito Eliminado"),200 
     return jsonify('no se encontro Carrito') 
 
+#Agregamos Categoria para cada producto 
+@api.route('/categoria', methods=['POST'])
+@jwt_required()
+def crear_categoria():
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
+
+    data = request.get_json()
+    nombre_categoria = data.get('nombre')
+
+    if not nombre_categoria:
+        return jsonify({"msg": "El nombre de la categoría es requerido"}), 400
+
+    nueva_categoria = Categoria(nombre=nombre_categoria)
+    db.session.add(nueva_categoria)
+    db.session.commit()
+
+    return jsonify({'msg': 'Categoría creada exitosamente', 'categoria': nueva_categoria.serialize()}), 201 
+#GET Categorias 
+@api.route('/categoria', methods=['GET'])
+def get_categorias():
+    categorias = Categoria.query.all()
+    return jsonify([categoria.serialize() for categoria in categorias]), 200 
+#GET Categoria por ID 
+@api.route('/productos/categoria/<int:categoria_id>', methods=['GET'])
+def get_productos_por_categoria(categoria_id):
+    productos = Product.query.filter_by(categoria_id=categoria_id).all()
+
+    if not productos:
+        return jsonify({'msg': 'No se encontraron productos en esta categoría'}), 404
+
+    return jsonify([producto.serialize() for producto in productos]), 200

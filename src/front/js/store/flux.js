@@ -13,7 +13,8 @@ const getState = ({ getStore, getActions, setStore }) => {
             producto: {},
             productos: [],
             carrito: [],
-            carritos: [],
+            carritos: [], 
+            categorias:[],
 
 
 
@@ -512,7 +513,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
            
            //Crear un producto 
-            crearProducto: async (name, descripcion, precio, imagen, cantidad) => {
+            crearProducto: async (name, descripcion, precio, imagen, cantidad, categoria_id) => {
                 console.log("Creando producto", name, descripcion, precio, imagen, cantidad)
 
                 const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/'
@@ -520,7 +521,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                 try {
                     const formData = new FormData()
                     formData.append("name", name)
-                    formData.append("descripcion", descripcion)
+                    formData.append("descripcion", descripcion) 
+                    formData.append("categoria_id", categoria_id)
                     formData.append("precio", parseFloat(precio)) // 🔧 importante
                     console.log("precio antes de agregar al FormData:", precio)
                     formData.append("imagen", imagen) // tipo File
@@ -794,6 +796,31 @@ const getState = ({ getStore, getActions, setStore }) => {
                         },
                         message: "Sesión de administrador restaurada desde localStorage"
                     });
+                }
+            }, 
+            getCategorias: async()=>{ 
+                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                try {
+                  const store = getStore(); 
+                  const response = await fetch(`${baseUrl}api/categoria`, {
+                    method: 'GET',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.msg || 'Error al cargar categorías');
+                  }
+                  const data = await response.json();
+                  // Guardamos la lista de categorías en el store para usar en componentes
+                  setStore({
+                    ...store,
+                    categorias: data,
+                    message: '', // Limpio mensaje de error si había
+                  });  
+                } catch (error) {
+                    console.error("Error al cargar categorías:", error);
                 }
             }
 

@@ -73,7 +73,8 @@ class Product (db.Model):
     #RelationShip
     role=db.Column(db.String(100),nullable=False,default='product')   
     carritos = db.relationship('Carrito', back_populates='product', lazy=True)
-    admin = db.relationship('Administrador', back_populates='products')
+    admin = db.relationship('Administrador', back_populates='products') 
+    categoria_id = db.Column(db.Integer, db.ForeignKey('categoria.categoria_id'), nullable=True)
     #
       
       
@@ -84,6 +85,7 @@ class Product (db.Model):
             "product_id":self.product_id, 
             "precio":self.precio, 
             "cantidad":self.cantidad, 
+            "categoria_id":self.categoria_id, 
             "name":self.name, 
             "imagen": f'/uploads/{self.imagen}' if self.imagen else None,
             "descripcion":self.descripcion,
@@ -107,8 +109,28 @@ class Carrito (db.Model):
             "product_id":self.product_id, 
             "user_id":self.user_id,  
             "cantidad":self.cantidad, 
-            "product":self.product.serialize
+            "product":self.product.serialize()
 
+        } 
+    
+class Categoria (db.Model):
+    __tablename__ = 'categoria'
+    categoria_id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False) 
+
+
+    #Relaciones 
+    productos = db.relationship('Product', backref='categoria', lazy=True)
+
+
+    def __repr__(self):
+        return f'<Categoria {self.nombre}>'
+
+    def serialize(self):
+        return {
+            "categoria_id": self.categoria_id,
+            "nombre": self.nombre,
+         
         }
 
 class Post (db.Model):

@@ -41,8 +41,9 @@ const eliminarUsuarioA = async (userId) => {
     }, [store.user]); // Dependencia para que se actualice cuando store.user cambie 
 
 
- 
-
+if (usuarios.length === 0) {
+    return <div className="text-center mt-4"><h4>No hay usuarios disponibles.</h4></div>;
+}
     
     return (
         <div className='container mt-4'>
