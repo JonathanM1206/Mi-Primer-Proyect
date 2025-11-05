@@ -109,7 +109,7 @@ const ListarProductos = () => {
                     <div key={producto.product_id} className="col-md-4 mb-4">
                         <div className="card shadow">
                             <img
-                                src={`https://redesigned-halibut-6949wqj5p44xfrx46-5173.app.github.dev${producto.imagen}?t=${timestamp}`}
+                                src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev${producto.imagen}?t=${timestamp}`}
                                 alt={producto.name}
                                 className="card-img-top"
                                 style={{

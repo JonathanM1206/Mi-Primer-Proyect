@@ -23,7 +23,7 @@ const getState = ({ getStore, getActions, setStore }) => {
         actions: {
             //Registrar un usuario
             registroUsuario: async (name, email, telefono, direccion, password) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
                     const response = await fetch(`${baseUrl}api/user`, {
@@ -77,7 +77,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Login de usuario 
             loginUsuario: async (email, password) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const response = await fetch(`${baseUrl}api/login/user`, {
                         method: 'POST',
@@ -120,7 +120,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Editando Usuario
             editarUsuario: async (userBody, userId) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token
 
@@ -155,7 +155,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Eliminar usuario 
             eliminarUsuario: async (userId) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 userId = userId || getStore().user?.id || localStorage.getItem("id");
                 if (!userId) {
                     console.error("No se proporcionó un ID de usuario válido para eliminar.", userId);
@@ -197,7 +197,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             //Login de administrador 
             loginAdmin: async (email, password) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const response = await fetch(`${baseUrl}api/login/admin`, {
                         method: 'POST',
@@ -239,7 +239,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Editando Administrador 
             editarAdmin: async (adminBody, adminId) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
                     const response = await fetch(`${baseUrl}api/edit_admin/${adminId}`, {
@@ -280,7 +280,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             eliminarUsuarioAdmin: async (userId) => {
 
                 try {
-                    const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                    const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                     const token = getStore().token;
                     console.log("Eliminando usuario con ID:", userId);
                     console.log("Token de autenticación:", token);
@@ -318,7 +318,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             ,
             //editar un producto por su id
             editarProducto: async (productoBody, productoId, nuevaImagen = null) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
 
@@ -402,7 +402,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Ver todos los productos 
             getProductos: async () => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/'
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/'
 
                 try {
                     const store = getStore();
@@ -434,7 +434,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Ver un producto por su id 
             getProductoPorId: async (id) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const response = await fetch(`${baseUrl}api/producto/${id}`, {
                         method: 'GET',
@@ -469,7 +469,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
                 try {
                     const token = getStore().token;
-                    const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                    const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
 
                     const response = await fetch(`${baseUrl}api/delete_producto/${productoId}`, {
                         method: 'DELETE',
@@ -516,7 +516,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             crearProducto: async (name, descripcion, precio, imagen, cantidad, categoria_id) => {
                 console.log("Creando producto", name, descripcion, precio, imagen, cantidad)
 
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/'
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/'
 
                 try {
                     const formData = new FormData()
@@ -568,7 +568,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Agregar un producto al carrito 
             agregarProductoCarrito: async (productoId, cantidad = 1) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
 
@@ -599,7 +599,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Ver Carrito 
             verCarrito: async () => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
                     const response = await fetch(`${baseUrl}api/carrito`, {
@@ -622,7 +622,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Eliminar un producto del carrito por su id
             eliminarProductoCarrito: async (carritoId) => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 carritoId = carritoId || getStore().carrito?.id || localStorage.getItem('id')
                 if (!carritoId) {
                     console.error("No se proporciono un ID valido", carritoId)
@@ -670,7 +670,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             reducirCantidadCarrito: async (carrito_id, cantidadActual) => {
                 const nuevaCantidad = cantidadActual - 1;
                 const token = getStore().token;
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
 
                 try {
                     const response = await fetch(`${baseUrl}api/carrito/${carrito_id}`, {
@@ -696,7 +696,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Eliminar Carrito Completo 
             vaciarCarrito: async () => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 const token = getStore().token;
 
                 try {
@@ -724,7 +724,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
             getUsuario: async () => {
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
                     const response = await fetch(`${baseUrl}api/user`, {
@@ -799,7 +799,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             }, 
             getCategorias: async()=>{ 
-                const baseUrl = 'https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/';
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                   const store = getStore(); 
                   const response = await fetch(`${baseUrl}api/categoria`, {

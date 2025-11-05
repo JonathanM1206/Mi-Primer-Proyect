@@ -33,7 +33,7 @@ const DetalleProducto = () => {
       <h1>Detalle del Producto</h1>
       <div className='card mb-3'>
         <img
-          src={`https://redesigned-halibut-6949wqj5p44xfrx46-5173.app.github.dev${producto.imagen}`}
+          src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev${producto.imagen}`}
           alt={producto.name}
           className="card-img-top"
           style={{ width: '100%', height: '300px' }}/> 
