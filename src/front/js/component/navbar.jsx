@@ -144,7 +144,7 @@ const navbar = () => {
                   <strong>Productos</strong>
                 </Link>
               </li>
-
+                {/* Botón Categoria */}
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="categoriasDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   Categorías
@@ -219,73 +219,82 @@ const navbar = () => {
                   <strong>Productos</strong>
                 </Link>
               </li>
+                                      {/* Botón Categoria */}
 
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="categoriasDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   Categorías
                 </a>
-                  {/*Categoria Dropdown */}
-              <ul className="dropdown-menu" aria-labelledby="categoriasDropdown">
-                {store.categorias.length > 0 ? (
-                  store.categorias.map(cat => (
-                    <li key={cat.categoria_id} className="d-flex justify-content-between align-items-center px-2">
-                      <Link className="dropdown-item flex-grow-1" to={`/ProductosPorCategoria/${cat.categoria_id}`}>
-                        {cat.nombre}
-                      </Link>
 
-                      {/* Botón editar con SweetAlert */}
-                      <button
-                        className="btn btn-sm btn-warning ms-1"
-                        onClick={() => {
-                          swal({
-                            text: "Editar nombre de la categoría:",
-                            content: "input",
-                            button: {
-                              text: "Guardar",
-                              closeModal: false,
-                            },
-                            value: cat.nombre
-                          })
-                            .then(nuevoNombre => {
-                              if (!nuevoNombre) throw null;
-                              actions.editarCategoria(cat.categoria_id, nuevoNombre);
-                              swal("Actualizado", "Categoría editada correctamente", "success");
+                <ul className="dropdown-menu" aria-labelledby="categoriasDropdown">
+                  {store.categorias.length > 0 ? (
+                    store.categorias.map(cat => (
+                      <li key={cat.categoria_id} className="d-flex justify-content-between align-items-center px-2">
+                        <Link className="dropdown-item flex-grow-1" to={`/ProductosPorCategoria/${cat.categoria_id}`}>
+                          {cat.nombre}
+                        </Link>
+
+                        {/* Botón editar con SweetAlert */}
+                        <button
+                          className="btn btn-sm btn-warning ms-1"
+                          onClick={() => {
+                            swal({
+                              text: "Editar nombre de la categoría:",
+                              content: "input",
+                              buttons: {
+                                cancel: "Cancelar",
+                                confirm: "Guardar"
+                              },
+                              value: cat.nombre
                             })
-                            .catch(err => {
-                              if (err) swal("Cancelado", "No se realizó ningún cambio", "info");
-                            });
-                        }}
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
+                              .then(nuevoNombre => {
+                                if (nuevoNombre === null) {
+                                  // Usuario canceló
+                                  swal("Cancelado", "No se realizó ningún cambio", "info");
+                                  return;
+                                }
+                                if (!nuevoNombre.trim()) {
+                                  // Input vacío
+                                  swal("Error", "Debes escribir un nombre válido", "warning");
+                                  return;
+                                }
+                                // Llamamos a la acción para editar
+                                actions.editarCategoria(cat.categoria_id, nuevoNombre);
+                                swal("Actualizado", "Categoría editada correctamente", "success");
+                              });
+                          }}
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
 
-                      {/* Botón eliminar con SweetAlert */}
-                      <button
-                        className="btn btn-sm btn-danger ms-1"
-                        onClick={() => {
-                          swal({
-                            title: "¿Estás seguro?",
-                            text: "No podrás deshacer esta acción",
-                            icon: "warning",
-                            buttons: true,
-                            dangerMode: true,
-                          }).then(confirmar => {
-                            if (confirmar) {
-                              actions.eliminarCategoria(cat.categoria_id);
-                              swal("Eliminado", "Categoría eliminada correctamente", "success");
-                            }
-                          });
-                        }}
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </li>
-                  ))
-                ) : (
-                  <li><span className="dropdown-item text-muted">Sin categorías</span></li>
-                )}
-              </ul>
+                        {/* Botón eliminar con SweetAlert */}
+                        <button
+                          className="btn btn-sm btn-danger ms-1"
+                          onClick={() => {
+                            swal({
+                              title: "¿Estás seguro?",
+                              text: "No podrás deshacer esta acción",
+                              icon: "warning",
+                              buttons: true,
+                              dangerMode: true,
+                            }).then(confirmar => {
+                              if (confirmar) {
+                                actions.eliminarCategoria(cat.categoria_id);
+                                swal("Eliminado", "Categoría eliminada correctamente", "success");
+                              }
+                            });
+                          }}
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </li>
+                    ))
+                  ) : (
+                    <li><span className="dropdown-item text-muted">Sin categorías</span></li>
+                  )}
+                </ul>
               </li>
+
               <li style={{ paddingLeft: "20px" }}>
                 <Link to="/listarUsuarios" style={{ color: "white", textDecoration: "none" }} className="btn btn-lg">
                   <strong>Usuarios</strong>
