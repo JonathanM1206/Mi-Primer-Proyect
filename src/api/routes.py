@@ -635,7 +635,7 @@ def editar_carrito(carrito_id):
         return jsonify({"message":"Carrito no encontrado"}),400 
     
     data=request.json  
-    if not isinstance(data,dict): 
+    if not isinstance(data,dict):  # Comprueba que esos datos sean un diccionario (JSON válido tipo {})
         return jsonify({"error":"Los datos deben ser un diccionario"}),400 
     
     # if "cantidad" in data: 
@@ -719,7 +719,7 @@ def crear_categoria():
 def get_categorias():
     categorias = Categoria.query.all()
     return jsonify([categoria.serialize() for categoria in categorias]), 200 
-#GET Categoria por ID 
+#GET EL Producto de la Categoria por ID 
 @api.route('/productos/categoria/<int:categoria_id>', methods=['GET'])
 def get_productos_por_categoria(categoria_id):
     productos = Product.query.filter_by(categoria_id=categoria_id).all()
@@ -727,4 +727,56 @@ def get_productos_por_categoria(categoria_id):
     if not productos:
         return jsonify({'msg': 'No se encontraron productos en esta categoría'}), 404
 
-    return jsonify([producto.serialize() for producto in productos]), 200
+    return jsonify([producto.serialize() for producto in productos]), 200 
+
+# DELETE Categoria
+@api.route('/categoria/<int:categoria_id>', methods=['DELETE'])
+@jwt_required()
+def eliminar_categoria(categoria_id):
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
+
+    categoria = Categoria.query.get(categoria_id)
+    if not categoria:
+        return jsonify({"msg": "Categoría no encontrada"}), 404
+
+    # No eliminamos los productos, solo quitamos la categoría
+    db.session.delete(categoria)
+    db.session.commit()
+
+    return jsonify({"msg": "Categoría eliminada correctamente"}), 200 
+
+#ver Informacion de la Categoria como el nombre Dependiendo el id 
+@api.route('/categoria/<int:categoria_id>', methods=['GET'])
+def get_categoria(categoria_id):
+    categoria = Categoria.query.get(categoria_id)
+    if not categoria:
+        return jsonify({"msg": "Categoría no encontrada"}), 404
+    return jsonify(categoria.serialize()), 200 
+
+
+
+# PUT para actualizar nombre de la categoría
+@api.route('/categoria/<int:categoria_id>', methods=['PUT'])
+@jwt_required()
+def actualizar_categoria(categoria_id):
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
+
+    categoria = Categoria.query.get(categoria_id)
+    if not categoria:
+        return jsonify({"msg": "Categoría no encontrada"}), 404
+
+    data = request.get_json()
+    nuevo_nombre = data.get('nombre')
+    if not nuevo_nombre:
+        return jsonify({"msg": "El nombre es requerido"}), 400
+
+    categoria.nombre = nuevo_nombre
+    db.session.commit()
+
+    return jsonify({'msg': 'Categoría actualizada', 'categoria': categoria.serialize()}), 200

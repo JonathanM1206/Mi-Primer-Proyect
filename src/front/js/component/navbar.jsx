@@ -1,5 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Link } from "react-router-dom";
+import swal from 'sweetalert';
 import { Context } from '../store/appContext.jsx';
 import { useNavigate } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css'; //install bootstrap styles 
@@ -20,10 +21,14 @@ const navbar = () => {
   }
 
 
+  useEffect(() => {
+    actions.getCategorias();
+  }, []);
+
 
   return (
     <nav style={{
-      backgroundColor: "#333",
+      backgroundColor: "#247456",
       padding: "1rem",
       display: "flex",
       alignItems: "center",
@@ -43,7 +48,7 @@ const navbar = () => {
             padding: "8px",
             borderRadius: "4px",
             border: "none",
-            marginLeft: "150px",
+            marginLeft: "50px",
           }}
         />
       </div>
@@ -67,6 +72,24 @@ const navbar = () => {
                   <h3>Productos</h3>
                 </Link>
               </li>
+              {/*Categoria Dropdown */}
+              <li className="nav-item dropdown">
+                <a className="nav-link dropdown-toggle" href="#" id="categoriasDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Categorías
+                </a>
+                <ul className="dropdown-menu" aria-labelledby="categoriasDropdown">
+                  {store.categorias.length > 0 ? (
+                    store.categorias.map(cat => (
+                      <li key={cat.categoria_id}>
+                        <a className="dropdown-item" href={`/ProductosPorCategoria/${cat.categoria_id}`}>{cat.nombre}</a>
+                      </li>
+                    ))
+                  ) : (
+                    <li><span className="dropdown-item text-muted">Sin categorías</span></li>
+                  )}
+                </ul>
+              </li>
+
               <li>
                 <div className="btn-group" style={{ marginRight: "20px", paddingLeft: "20px" }}>
                   <button className="btn btn-success btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -110,18 +133,35 @@ const navbar = () => {
 
           {role === "user" && (
             < >
-              
-                <li style={{ paddingLeft: "20px" }}>
-                  <Link to='/editUsuario' style={{ color: "white", textDecoration: "none" }}  className="btn btn-lg">
-                    <strong>Editar Usuario</strong>
-                  </Link>
-                </li>
-                <li style={{ paddingLeft: "20px" }}>
-                  <Link style={{ color: "white", textDecoration: "none" }} to="/listarProductos"  className="btn btn-lg">
-                    <strong>Productos</strong>
-                  </Link>
-                </li> 
-                <li>
+
+              <li style={{ paddingLeft: "20px" }}>
+                <Link to='/editUsuario' style={{ color: "white", textDecoration: "none" }} className="btn btn-lg">
+                  <strong>Editar Usuario</strong>
+                </Link>
+              </li>
+              <li style={{ paddingLeft: "20px" }}>
+                <Link style={{ color: "white", textDecoration: "none" }} to="/listarProductos" className="btn btn-lg">
+                  <strong>Productos</strong>
+                </Link>
+              </li>
+
+              <li className="nav-item dropdown">
+                <a className="nav-link dropdown-toggle" href="#" id="categoriasDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Categorías
+                </a>
+                <ul className="dropdown-menu" aria-labelledby="categoriasDropdown">
+                  {store.categorias.length > 0 ? (
+                    store.categorias.map(cat => (
+                      <li key={cat.categoria_id}>
+                        <a className="dropdown-item" href={`/ProductosPorCategoria/${cat.categoria_id}`}>{cat.nombre}</a>
+                      </li>
+                    ))
+                  ) : (
+                    <li><span className="dropdown-item text-muted">Sin categorías</span></li>
+                  )}
+                </ul>
+              </li>
+              <li>
                 <div className="btn-group" style={{ marginRight: "20px", paddingLeft: "20px" }}>
                   <button className="btn btn-success btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     {/* icono de carrito */}
@@ -156,7 +196,7 @@ const navbar = () => {
                   </div>
                 </div>
               </li>
-            
+
             </>
 
           )
@@ -178,8 +218,75 @@ const navbar = () => {
                 <Link to="/listarProductos" style={{ color: "white", textDecoration: "none" }} className="btn btn-lg">
                   <strong>Productos</strong>
                 </Link>
-              </li> 
-              <li style={{ paddingLeft: "20px" }}> 
+              </li>
+
+              <li className="nav-item dropdown">
+                <a className="nav-link dropdown-toggle" href="#" id="categoriasDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Categorías
+                </a>
+                  {/*Categoria Dropdown */}
+              <ul className="dropdown-menu" aria-labelledby="categoriasDropdown">
+                {store.categorias.length > 0 ? (
+                  store.categorias.map(cat => (
+                    <li key={cat.categoria_id} className="d-flex justify-content-between align-items-center px-2">
+                      <Link className="dropdown-item flex-grow-1" to={`/ProductosPorCategoria/${cat.categoria_id}`}>
+                        {cat.nombre}
+                      </Link>
+
+                      {/* Botón editar con SweetAlert */}
+                      <button
+                        className="btn btn-sm btn-warning ms-1"
+                        onClick={() => {
+                          swal({
+                            text: "Editar nombre de la categoría:",
+                            content: "input",
+                            button: {
+                              text: "Guardar",
+                              closeModal: false,
+                            },
+                            value: cat.nombre
+                          })
+                            .then(nuevoNombre => {
+                              if (!nuevoNombre) throw null;
+                              actions.editarCategoria(cat.categoria_id, nuevoNombre);
+                              swal("Actualizado", "Categoría editada correctamente", "success");
+                            })
+                            .catch(err => {
+                              if (err) swal("Cancelado", "No se realizó ningún cambio", "info");
+                            });
+                        }}
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+
+                      {/* Botón eliminar con SweetAlert */}
+                      <button
+                        className="btn btn-sm btn-danger ms-1"
+                        onClick={() => {
+                          swal({
+                            title: "¿Estás seguro?",
+                            text: "No podrás deshacer esta acción",
+                            icon: "warning",
+                            buttons: true,
+                            dangerMode: true,
+                          }).then(confirmar => {
+                            if (confirmar) {
+                              actions.eliminarCategoria(cat.categoria_id);
+                              swal("Eliminado", "Categoría eliminada correctamente", "success");
+                            }
+                          });
+                        }}
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </li>
+                  ))
+                ) : (
+                  <li><span className="dropdown-item text-muted">Sin categorías</span></li>
+                )}
+              </ul>
+              </li>
+              <li style={{ paddingLeft: "20px" }}>
                 <Link to="/listarUsuarios" style={{ color: "white", textDecoration: "none" }} className="btn btn-lg">
                   <strong>Usuarios</strong>
                 </Link>
@@ -196,7 +303,7 @@ const navbar = () => {
                 <button onClick={handleLogout} style={{ backgroundColor: "transparent", color: "white", border: "none", paddingLeft: "20px" }} className="btn btn-lg">
                   <strong>Logout</strong></button>
               </li>
-              
+
             </>
 
           )

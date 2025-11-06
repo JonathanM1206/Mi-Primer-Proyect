@@ -57,6 +57,19 @@ const Carrito = () => {
       }
   
   }; 
+ 
+// Aumentar cantidad de producto en el carrito
+const aumento = async (carrito_id, cantidadActual) => {
+  try {
+    await actions.aumentarCantidadCarrito(carrito_id, cantidadActual);
+    swal("Cantidad aumentada", "La cantidad del producto ha sido incrementada correctamente", "success");
+  } catch (error) {
+    console.error("Error al aumentar la cantidad:", error);
+    swal("Error", "No se pudo aumentar la cantidad del producto", "error");
+  }
+};
+
+
 
   //Eliminar producto del carrito
   const eliminar = async (carrito_id) => {
@@ -99,7 +112,7 @@ const Carrito = () => {
             <div key={index} className="col-md-4 mb-4">
               <div className="card shadow">
                 <img
-                  src={`https://redesigned-halibut-6949wqj5p44xfrx46-5000.app.github.dev/${item.producto.imagen}`}
+                  src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/${item.producto.imagen}`}
                   alt={item.name}
                   className="card-img-top"
                   style={{ height: "200px", objectFit: "cover" }}
@@ -110,8 +123,9 @@ const Carrito = () => {
                   <p><strong>Precio:</strong> Lps. {item.producto.precio}</p>
                   <p><strong>Cantidad:</strong> {item.cantidad}</p>
                   <button className="btn btn-warning me-2" onClick={() => reduzco(item.carrito_id, item.cantidad)}><strong>-</strong></button>
-                  
-                  <button className="btn btn-danger" onClick={() => eliminar(item.carrito_id)}><strong>X</strong></button>
+                    <button className="btn btn-success me-2" onClick={() => aumento(item.carrito_id, item.cantidad)}><strong>+</strong></button>
+
+                  <button className="btn btn-danger" onClick={() => eliminar(item.carrito_id)}><strong>🗑️</strong></button>
                 </div>
               </div>
             </div>

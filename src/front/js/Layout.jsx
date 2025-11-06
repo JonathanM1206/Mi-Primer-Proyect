@@ -19,7 +19,8 @@ import ListarProductos from './pages/ListarProductos.jsx';
 import Carrito from './pages/Carrito.jsx'; 
 import DetalleProducto from './pages/DetalleProducto.jsx';  
 import NotFound from './pages/NotFound.jsx'; 
-import ListaUsuario from './pages/ListaUsuario.jsx'; // Asegúrate de tener esta página creada
+import ListaUsuario from './pages/ListaUsuario.jsx'; // Asegúrate de tener esta página creada 
+import ProductosPorCategoria from './pages/ProductosPorCategoria.jsx';
 const Layout = () => { 
   const { store, actions } = useContext(Context); 
 
@@ -34,7 +35,9 @@ const Layout = () => {
                 <Route path="/" element={<Home/>} />  
                 {/* Rutas Generales para Usuario y Administrador */} 
                 <Route path='/Carrito' element={<Carrito/>} /> 
-                <Route path="/DetalleProducto/:id" element={<DetalleProducto/>} />
+                <Route path="/DetalleProducto/:id" element={<DetalleProducto/>} /> 
+                <Route path="/ProductosPorCategoria/:categoriaId" element={<ProductosPorCategoria />} />
+
                 {/* USUARIO */}
                 <Route path="/registroUsuario" element={<RegistroUsuario/>}/> 
                 <Route path="/loginUsuario" element={<LoginUsuario/>} /> 

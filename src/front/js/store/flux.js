@@ -13,8 +13,11 @@ const getState = ({ getStore, getActions, setStore }) => {
             producto: {},
             productos: [],
             carrito: [],
-            carritos: [], 
-            categorias:[],
+            carritos: [],
+            categorias: [],
+            productosPorCategoria: [], //guardaremos los productos filtrados 
+            cat: [],
+            message: '', // Para mensajes de error o info
 
 
 
@@ -511,8 +514,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                     setStore({ ...store, message: error.message || "Error al eliminar el producto" });
                 }
             },
-           
-           //Crear un producto 
+
+            //Crear un producto 
             crearProducto: async (name, descripcion, precio, imagen, cantidad, categoria_id) => {
                 console.log("Creando producto", name, descripcion, precio, imagen, cantidad)
 
@@ -521,7 +524,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 try {
                     const formData = new FormData()
                     formData.append("name", name)
-                    formData.append("descripcion", descripcion) 
+                    formData.append("descripcion", descripcion)
                     formData.append("categoria_id", categoria_id)
                     formData.append("precio", parseFloat(precio)) // 🔧 importante
                     console.log("precio antes de agregar al FormData:", precio)
@@ -666,7 +669,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     setStore({ ...store, message: error.message || "Error al eliminar el producto" });
                 }
             },
-            //Editar el Producto del Carrito 
+            //Editar el Producto del Carrito Reduciendo 
             reducirCantidadCarrito: async (carrito_id, cantidadActual) => {
                 const nuevaCantidad = cantidadActual - 1;
                 const token = getStore().token;
@@ -694,6 +697,36 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.error("Error al reducir cantidad:", error.message);
                 }
             },
+            //Editar el Producto del Carrito Aumentando
+            aumentarCantidadCarrito: async (carrito_id, cantidadActual) => {
+                const nuevaCantidad = cantidadActual + 1;
+                const token = getStore().token;
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+
+                try {
+                    const response = await fetch(`${baseUrl}api/carrito/${carrito_id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ cantidad: nuevaCantidad })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || "Error al aumentar cantidad");
+                    }
+
+                    const data = await response.json();
+                    console.log(data.message || data.msg);
+                    await getActions().verCarrito(); // refresca el carrito
+                } catch (error) {
+                    console.error("Error al aumentar cantidad:", error.message);
+                    swal("Error", error.message, "error");
+                }
+            },
+
             //Eliminar Carrito Completo 
             vaciarCarrito: async () => {
                 const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
@@ -797,32 +830,168 @@ const getState = ({ getStore, getActions, setStore }) => {
                         message: "Sesión de administrador restaurada desde localStorage"
                     });
                 }
-            }, 
-            getCategorias: async()=>{ 
+            },
+            //Ver Categorias en Navbar
+            getCategorias: async () => {
                 const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
-                  const store = getStore(); 
-                  const response = await fetch(`${baseUrl}api/categoria`, {
-                    method: 'GET',
-                    headers: {
-                      'Content-Type': 'application/json'
+                    const store = getStore();
+                    const response = await fetch(`${baseUrl}api/categoria`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.msg || 'Error al cargar categorías');
                     }
-                  });
-                  if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.msg || 'Error al cargar categorías');
-                  }
-                  const data = await response.json();
-                  // Guardamos la lista de categorías en el store para usar en componentes
-                  setStore({
-                    ...store,
-                    categorias: data,
-                    message: '', // Limpio mensaje de error si había
-                  });  
+                    const data = await response.json();
+                    // Guardamos la lista de categorías en el store para usar en componentes
+                    setStore({
+                        ...store,
+                        categorias: data,
+                        message: '', // Limpio mensaje de error si había
+                    });
                 } catch (error) {
                     console.error("Error al cargar categorías:", error);
                 }
-            }
+            },
+
+
+            crearCategoria: async (nombre) => {
+                const token = localStorage.getItem("token");
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+                try {
+                    const response = await fetch(`${baseUrl}api/categoria`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + token
+                        },
+                        body: JSON.stringify({ nombre })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        getActions().getCategorias(); // refresca las categorías
+                        return data;
+                    } else {
+                        const error = await response.json();
+                        console.error("Error al crear categoría:", error.msg || error);
+                    }
+                } catch (error) {
+                    console.error("Error al crear categoría:", error);
+                }
+            },
+
+            eliminarCategoria: async (categoria_id) => {
+                const token = localStorage.getItem("token");
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+                try {
+                    const response = await fetch(`${baseUrl}api/categoria/${categoria_id}`, {
+                        method: "DELETE",
+                        headers: { "Authorization": "Bearer " + token }
+                    });
+                    if (response.ok) {
+                        getActions().getCategorias(); // refresca la lista
+                    } else {
+                        const error = await response.json();
+                        console.error("Error al eliminar categoría:", error.msg || error);
+                    }
+                } catch (error) {
+                    console.error("Error al eliminar categoría:", error);
+                }
+            },
+            //Ver Productos por su categoria  
+            getProductosPorCategoria: async (categoria_id) => {
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+                try {
+                    const store = getStore();
+                    const response = await fetch(`${baseUrl}api/productos/categoria/${categoria_id}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.msg || 'Error al cargar productos por categoría');
+                    }
+
+                    const data = await response.json();
+
+                    setStore({
+                        ...store,
+                        productosPorCategoria: data, // Guardamos los productos filtrados en el store
+                        message: ''
+                    });
+
+                } catch (error) {
+                    console.error("Error al cargar productos por categoría:", error);
+                    setStore({
+                        ...getStore(),
+                        productosPorCategoria: [], // Limpia si hay error
+                        message: error.message
+                    });
+                }
+            },
+            //Informacion de Categoria 
+            getCategoriaPorId: async (categoria_id) => {
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+                try {
+                    const store = getStore();
+                    const response = await fetch(`${baseUrl}api/categoria/${categoria_id}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al cargar la categoría');
+                    }
+
+                    const data = await response.json();
+
+                    setStore({
+                        ...store,
+                        cat: data  // Guardamos la categoría en store
+                    });
+
+                } catch (error) {
+                    console.error(error);
+                    setStore({
+                        ...getStore(),
+                        cat: null
+                    });
+                }
+            },
+            //Nombre de la Categoria  
+            editarCategoria: async (categoria_id, nuevoNombre) => {
+                const token = localStorage.getItem("token");
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+                try {
+                    const response = await fetch(`${baseUrl}api/categoria/${categoria_id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + token
+                        },
+                        body: JSON.stringify({ nombre: nuevoNombre })
+                    });
+                    if (response.ok) {
+                        getActions().getCategorias(); // Refresca la lista
+                    } else {
+                        const error = await response.json();
+                        console.error("Error al editar categoría:", error.msg || error);
+                    }
+                } catch (error) {
+                    console.error("Error al editar categoría:", error);
+                }
+            },
+
+
 
         }
     }
