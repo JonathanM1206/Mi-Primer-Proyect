@@ -1,5 +1,6 @@
 
 from flask_sqlalchemy import SQLAlchemy 
+from datetime import datetime
 
 db=SQLAlchemy()  
 
@@ -95,7 +96,8 @@ class Carrito (db.Model):
     __tablename__='carrito'  
     carrito_id=db.Column(db.Integer, primary_key=True)
     product_id=db.Column(db.Integer,db.ForeignKey('product.product_id'),) 
-    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id')) 
+    guest_id = db.Column(db.String(100), nullable=True)  # 🔹 identificador para invitado
     cantidad=db.Column(db.Integer, nullable=False) 
     role=db.Column(db.String(100),nullable=False,default='carrito')    
     #Relationship  
@@ -107,7 +109,8 @@ class Carrito (db.Model):
         return{ 
             "carrito_id":self.carrito_id,
             "product_id":self.product_id, 
-            "user_id":self.user_id,  
+            "user_id":self.user_id, 
+            "guest_id":self.guest_id,   
             "cantidad":self.cantidad, 
             "product":self.product.serialize()
 
@@ -153,4 +156,31 @@ class Post (db.Model):
             "content": self.content,
         }
 
+class Pedido(db.Model):
+    __tablename__ = 'pedido'
+    pedido_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=True)  # Puede ser guest
+    guest_id = db.Column(db.String(100), nullable=True)  # Para usuarios invitados
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+    total = db.Column(db.Float, nullable=False)
+    estado = db.Column(db.String(50), default='pendiente')  # pendiente, pagado, cancelado
 
+    pagos = db.relationship('Pago', backref='pedido', lazy=True)
+    items = db.relationship('PedidoItem', backref='pedido', lazy=True)
+
+class PedidoItem(db.Model):
+    __tablename__ = 'pedido_item'
+    item_id = db.Column(db.Integer, primary_key=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.pedido_id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'))
+    cantidad = db.Column(db.Integer, nullable=False)
+    precio_unitario = db.Column(db.Float, nullable=False)
+
+class Pago(db.Model):
+    __tablename__ = 'pago'
+    pago_id = db.Column(db.Integer, primary_key=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.pedido_id'))
+    metodo = db.Column(db.String(50))  # pixelpay, tarjeta, efectivo, etc
+    estado = db.Column(db.String(50), default='pendiente')  # pendiente, completado, fallido
+    referencia = db.Column(db.String(200))  # ID de la transacción externa
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)

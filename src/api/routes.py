@@ -1,12 +1,14 @@
 import os
 from flask import Flask, request, jsonify, Blueprint   
-from api.models import db, User, Administrador, Product, Carrito, Post,Categoria
+from api.models import db, User, Administrador, Product, Carrito, Post,Categoria, Pedido,PedidoItem,Pago
 from api.utils import APIException 
 from flask_cors import CORS 
 from flask_bcrypt import Bcrypt 
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt  
-from datetime import timedelta  
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt, verify_jwt_in_request  
+from datetime import timedelta,datetime  
 from werkzeug.utils import secure_filename
+import uuid  # para generar guest_id únicos
+ 
 
 UPLOAD_FOLDER = './uploads'  # Carpeta donde guardarás las imágenes
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'} 
@@ -15,7 +17,9 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS 
 
 app = Flask(__name__) 
-api = Blueprint('api', __name__) 
+api = Blueprint('api', __name__)  
+pagos_api = Blueprint('pagos_api', __name__)
+
 
 # Aquí agregamos la configuración de la carpeta para subir imágenes
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -559,68 +563,84 @@ def delete_producto(product_id):
     return jsonify({'message':"Producto no Encontrado","product_id":product_id}),404 
 #Crear Carrito 
 @api.route('/carrito', methods=['POST']) 
-@jwt_required() 
 def agregar_a_carrito(): 
-    data = request.get_json() 
-    user_id = get_jwt_identity()  # ID del usuario que hace la petición 
-    product_id = data.get('product_id') 
-    cantidad = data.get('cantidad', 1) 
+    data = request.get_json()
+    product_id = data.get('product_id')
+    cantidad = data.get('cantidad', 1)
+    guest_id = data.get('guest_id')  # 🔹 viene del frontend si es invitado
 
-    if not product_id: 
-        return jsonify({'error': "falta el ID del Producto"}), 400  
-    
-    # Verificamos si el producto existe
-    product = Product.query.get(product_id) 
-    if not product: 
+    # Intentamos obtener user_id si hay token
+    user_id = None
+    try:
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
+    except:
+        pass
+
+    if not product_id:
+        return jsonify({'error': "Falta el ID del Producto"}), 400  
+
+    product = Product.query.get(product_id)
+    if not product:
         return jsonify({'error': 'Producto no encontrado'}), 400 
-    
-    # Buscamos si el producto ya está en el carrito del usuario
-    carrito_item = Carrito.query.filter_by(user_id=user_id,product_id=product_id).first()
+
+    # 🔹 Verificar stock
+    if cantidad > product.cantidad:
+        return jsonify({'error': f'No hay suficiente stock. Disponible: {product.cantidad}'}), 400
+
+    # 🔹 Si es usuario logueado
+    if user_id:
+        carrito_item = Carrito.query.filter_by(user_id=user_id, product_id=product_id).first()
+    else:
+        # 🔹 Si es invitado
+        if not guest_id:
+            guest_id = str(uuid.uuid4())  # genera un id temporal si no lo trae
+        carrito_item = Carrito.query.filter_by(guest_id=guest_id, product_id=product_id).first()
 
     if carrito_item:
-        # Si ya existe, sumamos las cantidades
         nueva_cantidad = carrito_item.cantidad + cantidad
-
-        # Validamos stock
         if nueva_cantidad > product.cantidad:
             return jsonify({'error': f'No hay suficiente stock. Cantidad disponible: {product.cantidad}'}), 400
-
         carrito_item.cantidad = nueva_cantidad
-        db.session.commit()
-        return jsonify({"msg": "Cantidad actualizada en el carrito"}), 200
-
     else:
-        # Si no existe, agregamos un nuevo item
-        if cantidad > product.cantidad:
-            return jsonify({'error': f'No hay suficiente stock. Cantidad disponible: {product.cantidad}'}), 400
+        carrito_item = Carrito(product_id=product_id, cantidad=cantidad, user_id=user_id, guest_id=guest_id)
+        db.session.add(carrito_item)
 
-        nuevo_item = Carrito( 
-            product_id=product_id, 
-            user_id=user_id, 
-            cantidad=cantidad
-        )
-        db.session.add(nuevo_item) 
-        db.session.commit() 
+    db.session.commit()
 
-        return jsonify({"msg": "Producto agregado al carrito"}), 201
+    return jsonify({
+        "msg": "Producto agregado al carrito",
+        "guest_id": guest_id  # 🔹 devolvemos guest_id para guardarlo en el frontend
+    }), 201
 #GET del CARRITO 
-@api.route('/carrito',methods=['GET']) 
-@jwt_required() 
-def ver_carrito(): 
-    user_id = get_jwt_identity() #si el token no pertenece a ese usuario, no lo deja ver el carrito. 
-      
-    
-    carrito=Carrito.query.filter_by(user_id=user_id).all() #Busca todos los productos en la tabla Carrito que tengan el mismo user_id
-    resultado=[] 
+@api.route('/carrito', methods=['GET'])
+def ver_carrito():
+    user_id = None
+    guest_id = request.args.get('guest_id')
 
-    for item in carrito: 
-        producto=Product.query.get(item.product_id) 
-        resultado.append({ #append agruega al final
-            "carrito_id":item.carrito_id, 
-            "producto":producto.serialize(), 
-            "cantidad":item.cantidad
-        }) 
-    return jsonify(resultado),200 
+    try:
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
+    except:
+        pass
+
+    if user_id:
+        carrito = Carrito.query.filter_by(user_id=user_id).all()
+    elif guest_id:
+        carrito = Carrito.query.filter_by(guest_id=guest_id).all()
+    else:
+        return jsonify([]), 200
+
+    resultado = [
+        {
+            "carrito_id": item.carrito_id,
+            "producto": item.product.serialize(),
+            "cantidad": item.cantidad
+        }
+        for item in carrito
+    ]
+    return jsonify(resultado), 200
+
 
 #PUT DE CARRITO 
 @api.route("/carrito/<int:carrito_id>",methods=['PUT']) 
@@ -779,4 +799,185 @@ def actualizar_categoria(categoria_id):
     categoria.nombre = nuevo_nombre
     db.session.commit()
 
-    return jsonify({'msg': 'Categoría actualizada', 'categoria': categoria.serialize()}), 200
+    return jsonify({'msg': 'Categoría actualizada', 'categoria': categoria.serialize()}), 200 
+
+
+
+
+# ----------------------
+# Pago PixelPay
+# ----------------------
+@pagos_api.route('/pago/pixelpay', methods=['POST'])
+def crear_pago_pixelpay():
+    data = request.get_json()
+    pedido_id = data.get('pedido_id')
+
+    pedido = Pedido.query.get(pedido_id)
+    if not pedido:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+
+    PIXELPAY_API_KEY = os.getenv("PIXELPAY_API_KEY")
+    PIXELPAY_PRIVATE_KEY = os.getenv("PIXELPAY_PRIVATE_KEY")
+
+    payload = {
+        "amount": float(pedido.total),
+        "order_id": str(pedido.pedido_id),
+        "currency": "USD",
+        "description": f"Pago pedido #{pedido.pedido_id}",
+        "customer": {"name": pedido.pago.nombre if pedido.pago else "Cliente"}
+    }
+
+    url = "https://pixelpay.dev/api/v2/transaction/sale"
+    headers = {
+        "X-Api-Key": PIXELPAY_API_KEY,
+        "X-Private-Key": PIXELPAY_PRIVATE_KEY,
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+    if response.status_code != 200:
+        return jsonify({"error": "No se pudo crear pago PixelPay", "detalle": response.json()}), 400
+
+    data_pixel = response.json()
+    pago = Pago(
+        pedido_id=pedido_id,
+        metodo="pixelpay",
+        estado="pendiente",
+        referencia=data_pixel["data"]["transaction_id"]
+    )
+    db.session.add(pago)
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Pago PixelPay creado",
+        "pago_id": pago.pago_id,
+        "transaccion_id": pago.referencia,
+        "pago_url": data_pixel["data"]["payment_url"]
+    }), 200
+
+# ----------------------
+# Pago Transferencia
+# ----------------------
+@pagos_api.route('/pago/transferencia', methods=['POST'])
+def crear_pago_transferencia():
+    data = request.get_json()
+    pedido_id = data.get('pedido_id')
+
+    pedido = Pedido.query.get(pedido_id)
+    if not pedido:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+
+    pago = Pago(
+        pedido_id=pedido_id,
+        metodo="transferencia",
+        estado="pendiente",
+        referencia=str(uuid.uuid4())
+    )
+    db.session.add(pago)
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Pago por transferencia creado",
+        "pago_id": pago.pago_id,
+        "referencia": pago.referencia,
+        "estado": pago.estado
+    }), 200
+
+#Pagos de pago 
+@pagos_api.route('/admin/pagos', methods=['GET'])
+def ver_todos_pagos():
+    pagos = Pago.query.order_by(Pago.fecha.desc()).all()
+    resultado = []
+
+    for p in pagos:
+        pedido = Pedido.query.get(p.pedido_id)
+        resultado.append({
+            "pago_id": p.pago_id,
+            "pedido_id": p.pedido_id,
+            "metodo": p.metodo,
+            "estado": p.estado,
+            "referencia": p.referencia,
+            "monto_total": pedido.total if pedido else 0,
+            "fecha_pago": p.fecha.isoformat(),
+            "usuario": {
+                "nombre": pedido.pago.nombre if pedido and pedido.pago else "Invitado",
+                "email": pedido.pago.email if pedido and pedido.pago else None
+            },
+            "items": [
+                {
+                    "product_id": i.product_id,
+                    "cantidad": i.cantidad,
+                    "precio_unitario": i.precio_unitario
+                } for i in pedido.items
+            ] if pedido else []
+        })
+
+    return jsonify(resultado), 200 
+
+#Pagos de Usuario 
+@pagos_api.route('/usuario/pagos', methods=['GET'])
+def ver_pagos_usuario():
+    user_id = request.args.get('user_id')
+    guest_id = request.args.get('guest_id')
+
+    if user_id:
+        pedidos = Pedido.query.filter_by(user_id=user_id).all()
+    elif guest_id:
+        pedidos = Pedido.query.filter_by(guest_id=guest_id).all()
+    else:
+        return jsonify({"error": "Se requiere user_id o guest_id"}), 400
+
+    resultado = []
+    for pedido in pedidos:
+        pagos = Pago.query.filter_by(pedido_id=pedido.pedido_id).all()
+        resultado.append({
+            "pedido_id": pedido.pedido_id,
+            "estado_pedido": pedido.estado,
+            "total": pedido.total,
+            "fecha": pedido.fecha.isoformat(),
+            "items": [
+                {
+                    "product_id": i.product_id,
+                    "cantidad": i.cantidad,
+                    "precio_unitario": i.precio_unitario
+                } for i in pedido.items
+            ],
+            "pagos": [
+                {
+                    "pago_id": p.pago_id,
+                    "metodo": p.metodo,
+                    "estado": p.estado,
+                    "referencia": p.referencia,
+                    "fecha_pago": p.fecha.isoformat()
+                } for p in pagos
+            ]
+        })
+    return jsonify(resultado), 200 
+
+
+# ======================
+# Actualizar estado del pago
+# ======================
+@pagos_api.route('/pago/<int:pago_id>', methods=['PUT'])
+def actualizar_estado_pago(pago_id):
+    data = request.get_json()
+    nuevo_estado = data.get('estado')
+
+    pago = Pago.query.get(pago_id)
+    if not pago:
+        return jsonify({"error": "Pago no encontrado"}), 404
+
+    pago.estado = nuevo_estado
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Estado del pago actualizado",
+        "pago_id": pago.pago_id,
+        "estado": pago.estado
+    }), 200
+
+
+
+
+
+

@@ -17,6 +17,10 @@ const getState = ({ getStore, getActions, setStore }) => {
             categorias: [],
             productosPorCategoria: [], //guardaremos los productos filtrados 
             cat: [],
+            pedidos: [],
+            pedidoActual: null,
+            guest_id: localStorage.getItem("guest_id") || null,
+            historialPedidos: [],
             message: '', // Para mensajes de error o info
 
 
@@ -574,55 +578,55 @@ const getState = ({ getStore, getActions, setStore }) => {
                 const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
+                    let guestId = localStorage.getItem("guest_id");
+
+                    // Si no hay guest_id, creamos uno (por única vez)
+                    if (!guestId) {
+                        guestId = crypto.randomUUID(); // genera un id único
+                        localStorage.setItem("guest_id", guestId);
+                    }
 
                     const response = await fetch(`${baseUrl}api/carrito`, {
                         method: 'POST',
                         headers: {
                             "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}) // solo si hay token
                         },
-                        body: JSON.stringify({ product_id: productoId, cantidad })
+                        body: JSON.stringify({ product_id: productoId, cantidad, guest_id: guestId })
                     });
+
                     if (!response.ok) {
                         const errorData = await response.json();
-                        console.error("Error al agregar al Carrito:", errorData);
                         throw new Error(errorData.error || 'Error al agregar Producto');
                     }
-                    const data = await response.json()
-                    console.log("error en agregar", data)
 
-                    console.log("error aqui ", data)
+                    const data = await response.json();
                     await getActions().verCarrito();
-
-                    return data
+                    return data;
                 } catch (error) {
                     console.error("Error al agregar producto al carrito:", error);
-                    throw error
+                    throw error;
                 }
             },
+
             //Ver Carrito 
             verCarrito: async () => {
                 const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
-                try {
-                    const token = getStore().token;
-                    const response = await fetch(`${baseUrl}api/carrito`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    })
-                    if (!response.ok) {
-                        const errorData = await response.json()
-                        console.log('Error al ver Carrito', errorData)
-                        throw new Error(errorData.message || 'Error al ver Producto')
-                    }
-                    const data = await response.json()
-                    let store = getStore()
-                    setStore({ ...store, carrito: data || [] })
-                } catch (error) {
-                    console.log('Errro al obtener carrito', error)
+                const token = getStore().token;
+                const guestId = localStorage.getItem("guest_id");
+                const url = token
+                    ? `${baseUrl}api/carrito`
+                    : `${baseUrl}api/carrito?guest_id=${guestId}`;
 
-                }
+                const response = await fetch(url, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
+
+                if (!response.ok) throw new Error("Error al ver carrito");
+                const data = await response.json();
+                setStore({ ...getStore(), carrito: data });
             },
+
             //Eliminar un producto del carrito por su id
             eliminarProductoCarrito: async (carritoId) => {
                 const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
@@ -990,6 +994,156 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.error("Error al editar categoría:", error);
                 }
             },
+
+            // 🔹 Crear Pedido (guest o usuario)
+            crearPedido: async (datosPedido) => { 
+                                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+
+                try {
+                    const store = getStore();
+
+                    // Si no hay guest_id, generamos uno y lo guardamos
+                    if (!store.guest_id) {
+                        const nuevoGuestId = crypto.randomUUID();
+                        localStorage.setItem("guest_id", nuevoGuestId);
+                        setStore({ guest_id: nuevoGuestId });
+                        datosPedido.guest_id = nuevoGuestId;
+                    }
+
+                    const response = await fetch(`${baseUrl}pedido`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(datosPedido),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error al crear pedido");
+                    }
+
+                    // Guardamos el pedido creado en el store
+                    setStore({
+                        ...store,
+                        pedidoActual: data,
+                        message: data.msg,
+                    });
+
+                    return true;
+
+                } catch (error) {
+                    console.error("Error al crear pedido:", error);
+                    setStore({ message: error.message });
+                    return false;
+                }
+            },
+
+            // 🔹 Simular Pago (PixelPay prueba)
+            pagarPedidoPrueba: async (pedido_id, metodo = "pixelpay") => { 
+                                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+
+                try {
+                    const response = await fetch(`${baseUrl}pago/prueba`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ pedido_id, metodo }),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error al procesar pago");
+                    }
+
+                    console.log("✅ Pago completado:", data);
+                    setStore({
+                        ...getStore(),
+                        message: "Pago completado correctamente",
+                    });
+
+                    return true;
+
+                } catch (error) {
+                    console.error("Error en pago prueba:", error);
+                    setStore({ message: error.message });
+                    return false;
+                }
+            },
+            // 🔹 Ver historial de pedidos (user o guest)
+            getHistorialPedidos: async () => { 
+                                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+
+                try {
+                    const store = getStore();
+                    const user = store.user;
+                    const guest_id = store.guest_id;
+
+                    let url = `${baseUrl}pedidos?`;
+
+                    if (user && user.user_id) {
+                        url += `user_id=${user.user_id}`;
+                    } else if (guest_id) {
+                        url += `guest_id=${guest_id}`;
+                    } else {
+                        throw new Error("No se encontró usuario ni guest_id");
+                    }
+
+                    const response = await fetch(url, {
+                        method: "GET",
+                        headers: { "Content-Type": "application/json" },
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error al obtener pedidos");
+                    }
+
+                    setStore({
+                        ...store,
+                        historialPedidos: data,
+                        message: "",
+                    });
+
+                } catch (error) {
+                    console.error("Error al obtener historial:", error);
+                    setStore({ historialPedidos: [], message: error.message });
+                }
+            },
+            // 🔹 Registrar invitado rápido
+            registrarInvitado: async (formData) => {
+                try {
+                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+                    const response = await fetch(`${baseUrl}api/register`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) throw new Error(data.msg || "Error al registrar usuario");
+
+                    // Guardamos el token
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("role", "user");
+
+                    setStore({
+                        token: data.token,
+                        user: data.user,
+                        role: "user",
+                    });
+
+                    return true;
+
+                } catch (error) {
+                    console.error("Error al registrar invitado:", error);
+                    setStore({ message: error.message });
+                    return false;
+                }
+            },
+
+
 
 
 
