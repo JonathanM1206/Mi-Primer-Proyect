@@ -68,11 +68,11 @@ class Product (db.Model):
     descripcion=db.Column(db.String(200),nullable=False) 
     admin_id = db.Column(db.Integer, db.ForeignKey('admin.admin_id'))
     imagen = db.Column(db.String(255), nullable=True)
- 
+    role=db.Column(db.String(100),nullable=False,default='product')
 
 
     #RelationShip
-    role=db.Column(db.String(100),nullable=False,default='product')   
+      
     carritos = db.relationship('Carrito', back_populates='product', lazy=True)
     admin = db.relationship('Administrador', back_populates='products') 
     categoria_id = db.Column(db.Integer, db.ForeignKey('categoria.categoria_id'), nullable=True)

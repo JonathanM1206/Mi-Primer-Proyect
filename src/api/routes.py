@@ -179,7 +179,7 @@ def show_users():
     return jsonify(user_list), 200 
 #DELETE USER     
 @api.route('/delete_user/<int:user_id>',methods=['DELETE'])  
-@jwt_required()  #obliga a que el usuario esté logueado
+@jwt_required()  #obliga a que el usuario esté logueado 
 def delete_user(user_id): 
     user=User.query.get(user_id) 
     if not user: 
@@ -976,7 +976,75 @@ def actualizar_estado_pago(pago_id):
         "estado": pago.estado
     }), 200
 
+@pagos_api.route('/admin/pagos/usuario/<int:user_id>', methods=['GET'])
+def admin_pagos_por_usuario(user_id):
+    pagos = Pago.query.join(Pedido).filter(Pedido.user_id == user_id).all()
+    resultado = []
 
+    for pago in pagos:
+        pedido = pago.pedido
+        resultado.append({
+            "pago_id": pago.pago_id,
+            "estado": pago.estado,
+            "metodo": pago.metodo,
+            "referencia": pago.referencia,
+            "fecha": pago.fecha.isoformat(),
+            "pedido_id": pedido.pedido_id,
+            "total": pedido.total,
+            "items": [
+                {
+                    "product_id": item.product_id,
+                    "cantidad": item.cantidad,
+                    "precio_unitario": item.precio_unitario
+                } for item in pedido.items
+            ]
+        })
+    return jsonify(resultado), 200
+
+
+
+# ======================
+# Obtener pedidos de un día específico
+# ======================
+@admin_api.route('/admin/pedidos/fecha/<fecha>', methods=['GET'])
+def pedidos_por_fecha(fecha):
+    try:
+        # Convertir fecha string a datetime
+        fecha_dt = datetime.strptime(fecha, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({"error": "Formato de fecha inválido. Use YYYY-MM-DD"}), 400
+
+    # Buscar pedidos de esa fecha
+    pedidos = Pedido.query.filter(
+        db.func.date(Pedido.fecha) == fecha_dt.date()
+    ).all()
+
+    resultado = []
+    for pedido in pedidos:
+        usuario = pedido.user.serialize() if pedido.user else {"name": "Invitado", "email": "N/A"}
+        resultado.append({
+            "pedido_id": pedido.pedido_id,
+            "fecha": pedido.fecha.isoformat(),
+            "total": pedido.total,
+            "estado": pedido.estado,
+            "usuario": usuario,
+            "items": [
+                {
+                    "product_id": item.product_id,
+                    "cantidad": item.cantidad,
+                    "precio_unitario": item.precio_unitario
+                } for item in pedido.items
+            ],
+            "pagos": [
+                {
+                    "metodo": pago.metodo,
+                    "estado": pago.estado,
+                    "referencia": pago.referencia
+                } for pago in pedido.pagos
+            ]
+        })
+
+    return jsonify(resultado), 200
 
 
 
