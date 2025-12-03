@@ -807,7 +807,7 @@ def actualizar_categoria(categoria_id):
 # ----------------------
 # Pago PixelPay
 # ----------------------
-@pagos_api.route('/pago/pixelpay', methods=['POST'])
+@api.route('/pago/pixelpay', methods=['POST'])
 def crear_pago_pixelpay():
     data = request.get_json()
     pedido_id = data.get('pedido_id')
@@ -884,7 +884,7 @@ def crear_pago_transferencia():
     }), 200
 
 #Pagos de pago 
-@pagos_api.route('/admin/pagos', methods=['GET'])
+@api.route('/admin/pagos', methods=['GET'])
 def ver_todos_pagos():
     pagos = Pago.query.order_by(Pago.fecha.desc()).all()
     resultado = []
@@ -915,7 +915,7 @@ def ver_todos_pagos():
     return jsonify(resultado), 200 
 
 #Pagos de Usuario 
-@pagos_api.route('/usuario/pagos', methods=['GET'])
+@api.route('/usuario/pagos', methods=['GET'])
 def ver_pagos_usuario():
     user_id = request.args.get('user_id')
     guest_id = request.args.get('guest_id')
@@ -958,7 +958,7 @@ def ver_pagos_usuario():
 # ======================
 # Actualizar estado del pago
 # ======================
-@pagos_api.route('/pago/<int:pago_id>', methods=['PUT'])
+@api.route('/pago/<int:pago_id>', methods=['PUT'])
 def actualizar_estado_pago(pago_id):
     data = request.get_json()
     nuevo_estado = data.get('estado')
@@ -976,7 +976,7 @@ def actualizar_estado_pago(pago_id):
         "estado": pago.estado
     }), 200
 
-@pagos_api.route('/admin/pagos/usuario/<int:user_id>', methods=['GET'])
+@api.route('/admin/pagos/usuario/<int:user_id>', methods=['GET'])
 def admin_pagos_por_usuario(user_id):
     pagos = Pago.query.join(Pedido).filter(Pedido.user_id == user_id).all()
     resultado = []
@@ -1006,7 +1006,7 @@ def admin_pagos_por_usuario(user_id):
 # ======================
 # Obtener pedidos de un día específico
 # ======================
-@admin_api.route('/admin/pedidos/fecha/<fecha>', methods=['GET'])
+@api.route('/admin/pedidos/fecha/<fecha>', methods=['GET'])
 def pedidos_por_fecha(fecha):
     try:
         # Convertir fecha string a datetime
@@ -1046,6 +1046,22 @@ def pedidos_por_fecha(fecha):
 
     return jsonify(resultado), 200
 
+# Buscar productos
+@app.route('/productos/buscar')
+def buscar_productos():
+    query = request.args.get('query', '')  # 🔹 Captura lo que escribiste en el input
+    if not query:
+        return jsonify([])  # si no hay nada, devuelve lista vacía
+    productos = Product.query.filter(Product.name.ilike(f'%{query}%')).all()  # Busca coincidencias
+    return jsonify([p.serialize() for p in productos])  # Devuelve JSON con los producto
 
+# Buscar usuarios
+@app.route('/usuarios/buscar')
+def buscar_usuarios():
+    query = request.args.get('query', '')
+    if not query:
+        return jsonify([])
+    usuarios = User.query.filter(User.name.ilike(f'%{query}%')).all()
+    return jsonify([u.serialize() for u in usuarios])
 
 
