@@ -21,6 +21,7 @@ import DetalleProducto from './pages/DetalleProducto.jsx';
 import NotFound from './pages/NotFound.jsx'; 
 import ListaUsuario from './pages/ListaUsuario.jsx'; // Asegúrate de tener esta página creada 
 import ProductosPorCategoria from './pages/ProductosPorCategoria.jsx';
+import Footer from './component/Footer.jsx';
 const Layout = () => { 
   const { store, actions } = useContext(Context); 
 
@@ -51,7 +52,8 @@ const Layout = () => {
                  <Route path="/listarUsuarios" element={<ListaUsuario/>} />
             
                 <Route path="*" element={<NotFound/>} />
-            </Routes>
+            </Routes> 
+            <Footer/>
         </BrowserRouter>
   )
 }

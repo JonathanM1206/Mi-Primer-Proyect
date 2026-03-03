@@ -1,4 +1,4 @@
-
+import swal from "sweetalert";
 
 const getState = ({ getStore, getActions, setStore }) => {
 

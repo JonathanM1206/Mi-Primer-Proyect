@@ -9,7 +9,7 @@ def setup_admin(app):
     app.config['FLASK_ADMIN_SWATCH'] = 'cosmo'
 
     # Creamos la interfaz de admin
-    admin_panel = Admin(app, name='Profunat Admin', url='/admin')
+    admin_panel = Admin(app, name='Fuente de Salud Bethel', url='/admin')
 
     # Agregamos los modelos
     admin_panel.add_view(ModelView(Administrador, db.session, name='Administradores', endpoint='admin_model'))
