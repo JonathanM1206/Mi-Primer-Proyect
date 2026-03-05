@@ -14,11 +14,7 @@ const navbar = () => {
   const navigate = useNavigate();
 
 
-  const handleLogout = () => {
-    actions.logout();
-    navigate("/");
-
-  }
+ 
 
 
   useEffect(() => {
@@ -306,18 +302,7 @@ const navbar = () => {
           )
 
           }
-          {(role === 'admin' || role === 'user') && (
-            <>
-              <li>
-                <button onClick={handleLogout} style={{ backgroundColor: "transparent", color: "white", border: "none", paddingLeft: "20px" }} className="btn btn-lg">
-                  <strong>Logout</strong></button>
-              </li>
-
-            </>
-
-          )
-
-          }
+     
 
         </ul>
       </div>

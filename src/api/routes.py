@@ -643,78 +643,100 @@ def ver_carrito():
 
 
 #PUT DE CARRITO 
-@api.route("/carrito/<int:carrito_id>",methods=['PUT']) 
-@jwt_required() 
-def editar_carrito(carrito_id):  
-    user_id = get_jwt_identity()  #si el token no pertenece a ese usuario, no lo deja ver el carrito. 
-     
-    #verifico si el carrito existe y que pertenezca al usuario que hace la petición 
-    producto=Product.query.all()
-    carrito=Carrito.query.filter_by(carrito_id=carrito_id,user_id=user_id).first() 
-    if not carrito: 
-        return jsonify({"message":"Carrito no encontrado"}),400 
-    
-    data=request.json  
-    if not isinstance(data,dict):  # Comprueba que esos datos sean un diccionario (JSON válido tipo {})
-        return jsonify({"error":"Los datos deben ser un diccionario"}),400 
-    
-    # if "cantidad" in data: 
-    #     carrito.cantidad=data['cantidad'] 
-    #permite cambiar la cantidad y valida en stock
+@api.route("/carrito/<int:carrito_id>", methods=['PUT'])
+def editar_carrito(carrito_id):
+
+    data = request.get_json()  # obtiene datos enviados
+    guest_id = data.get("guest_id")  # guest_id si es invitado
     nueva_cantidad = data.get("cantidad")
-    if not nueva_cantidad:
-        return jsonify({"error": "Falta el campo cantidad"}), 400
+
+    user_id = None
+
+    try:
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
+    except:
+        pass
+
+    if user_id:
+        carrito = Carrito.query.filter_by(carrito_id=carrito_id, user_id=user_id).first()
+    else:
+        carrito = Carrito.query.filter_by(carrito_id=carrito_id, guest_id=guest_id).first()
+
+    if not carrito:
+        return jsonify({"error": "Carrito no encontrado"}), 404
 
     producto = Product.query.get(carrito.product_id)
+
     if nueva_cantidad > producto.cantidad:
-        return jsonify({"error": f"No hay suficiente stock. Solo hay {producto.cantidad} disponibles"}), 400 
-    
+        return jsonify({"error": f"No hay suficiente stock. Solo hay {producto.cantidad}"}), 400
+
     if nueva_cantidad < 1:
-     db.session.delete(carrito)
-     db.session.commit()
-     return jsonify({"msg": "Producto eliminado del carrito"}), 200
+        db.session.delete(carrito)
+        db.session.commit()
+        return jsonify({"msg": "Producto eliminado del carrito"}), 200
 
     carrito.cantidad = nueva_cantidad
 
-    
-    
-    if "producto_id" in data:
-        carrito.product_id=data['producto_id'] 
+    db.session.commit()
 
-  
-    try: 
-        db.session.commit() 
-        return jsonify({"message":"El Carrito se edito correctamente"}),200 
-    except Exception as e: 
-        db.session.rollback() 
-        return jsonify({"error":str(e)}),500 
+    return jsonify({"msg": "Cantidad actualizada"}), 200
 
 #DELETE CARRITO completo
 @api.route('/carrito', methods=['DELETE'])
-@jwt_required()
-def vaciar_carrito_completo():
-    user_id = get_jwt_identity()
-    Carrito.query.filter_by(user_id=user_id).delete()
+def vaciar_carrito():
+
+    guest_id = request.args.get("guest_id")
+
+    user_id = None
+
+    try:
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
+    except:
+        pass
+
+    if user_id:
+        Carrito.query.filter_by(user_id=user_id).delete()
+
+    elif guest_id:
+        Carrito.query.filter_by(guest_id=guest_id).delete()
+
+    else:
+        return jsonify({"error": "No se encontro carrito"}), 400
+
     db.session.commit()
-    return jsonify({"msg": "Todos los productos del carrito fueron eliminados"}), 200
+
+    return jsonify({"msg": "Carrito vaciado"}), 200
 
 #DELETE Prodcuto del  CARRITO 
-@api.route('/delete_carrito/<int:carrito_id>',methods=["DELETE"])  
-@jwt_required() 
-def delete_carrito(carrito_id) : 
-    user_id = get_jwt_identity()  # Obtengo el usuario que hace la petición
+@api.route('/delete_carrito/<int:carrito_id>', methods=["DELETE"])
+def delete_carrito(carrito_id):
 
-    # Busco el carrito que tenga el carrito_id y que además pertenezca a este usuario
+    guest_id = request.args.get("guest_id")
 
-    carrito = Carrito.query.filter_by(carrito_id=carrito_id, user_id=user_id).first()
-    if carrito: 
+    user_id = None
 
-        db.session.delete(carrito) 
-        db.session.commit() 
-        return jsonify("Carrito Eliminado"),200 
-    return jsonify('no se encontro Carrito') 
+    try:
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
+    except:
+        pass
 
-#Agregamos Categoria para cada producto 
+    if user_id:
+        carrito = Carrito.query.filter_by(carrito_id=carrito_id, user_id=user_id).first()
+    else:
+        carrito = Carrito.query.filter_by(carrito_id=carrito_id, guest_id=guest_id).first()
+
+    if not carrito:
+        return jsonify({"error": "Carrito no encontrado"}), 404
+
+    db.session.delete(carrito)
+    db.session.commit()
+
+    return jsonify({"msg": "Producto eliminado"}), 200
+
+#Agregamos  Crear Categoria para cada producto 
 @api.route('/categoria', methods=['POST'])
 @jwt_required()
 def crear_categoria():
@@ -801,6 +823,57 @@ def actualizar_categoria(categoria_id):
 
     return jsonify({'msg': 'Categoría actualizada', 'categoria': categoria.serialize()}), 200 
 
+#Asignando Categoria: 
+@api.route('/producto/<int:product_id>/categoria/<int:categoria_id>', methods=['PUT'])
+@jwt_required()
+def asignar_categoria_producto(product_id, categoria_id):
+
+    admin_id = get_jwt_identity()  # obtiene el admin logueado
+    admin = Administrador.query.get(admin_id)  # busca el admin en BD
+
+    if not admin or admin.role != "admin":  # valida que sea admin
+        return jsonify({"msg": "Acceso denegado"}), 403
+
+    producto = Product.query.get(product_id)  # busca el producto
+
+    if not producto:
+        return jsonify({"msg": "Producto no encontrado"}), 404
+
+    categoria = Categoria.query.get(categoria_id)  # busca la categoria
+
+    if not categoria:
+        return jsonify({"msg": "Categoria no encontrada"}), 404
+
+    producto.categoria_id = categoria_id  # asigna categoria
+
+    db.session.commit()  # guarda cambios
+
+    return jsonify({
+        "msg": "Categoria asignada correctamente",
+        "producto": producto.serialize()
+    }), 200 
+    
+#quitar de Categoria: 
+@api.route('/producto/<int:product_id>/categoria', methods=['DELETE'])
+@jwt_required()
+def quitar_categoria_producto(product_id):
+
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
+
+    producto = Product.query.get(product_id)
+
+    if not producto:
+        return jsonify({"msg": "Producto no encontrado"}), 404
+
+    producto.categoria_id = None  # quitamos la categoria
+
+    db.session.commit()
+
+    return jsonify({"msg": "Categoria removida del producto"}), 200
 
 
 

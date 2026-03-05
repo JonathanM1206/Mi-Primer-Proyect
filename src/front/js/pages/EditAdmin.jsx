@@ -29,7 +29,13 @@ const EditAdmin = () => {
         } catch (error) {
             console.error("Error al editar el Administrador:", error);
         }
-    };
+    }; 
+
+      const handleLogout = () => {
+    actions.logout();
+    navigate("/");
+
+  }
 
     useEffect(() => {
         if (store.admin) {
@@ -81,7 +87,7 @@ const EditAdmin = () => {
 
     const extraButton = {
         ...buttonStyle,
-        backgroundColor: '#6f42c1', // Morado
+        backgroundColor: '#cc2923', // Morado
         color: 'white'
     };
 
@@ -125,7 +131,7 @@ const EditAdmin = () => {
                 )}
                 {/* Aquí espacio para agregar más botones */}
                 <div style={{ marginTop: '20px' }}>
-                    <button style={extraButton} onClick={() => alert('Botón extra')}>Botón Extra</button>
+                    <button style={extraButton} onClick={() => handleLogout()}>Logout</button>
                 </div>
             </div>
         </div>

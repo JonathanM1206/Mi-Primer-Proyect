@@ -1,6 +1,7 @@
 import swal from "sweetalert";
 
 const getState = ({ getStore, getActions, setStore }) => {
+    const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
 
     return {
         store: {
@@ -30,7 +31,6 @@ const getState = ({ getStore, getActions, setStore }) => {
         actions: {
             //Registrar un usuario
             registroUsuario: async (name, email, telefono, direccion, password) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
                     const response = await fetch(`${baseUrl}api/user`, {
@@ -84,7 +84,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Login de usuario 
             loginUsuario: async (email, password) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const response = await fetch(`${baseUrl}api/login/user`, {
                         method: 'POST',
@@ -127,7 +126,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Editando Usuario
             editarUsuario: async (userBody, userId) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token
 
@@ -162,7 +160,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Eliminar usuario 
             eliminarUsuario: async (userId) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 userId = userId || getStore().user?.id || localStorage.getItem("id");
                 if (!userId) {
                     console.error("No se proporcionó un ID de usuario válido para eliminar.", userId);
@@ -204,7 +201,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             //Login de administrador 
             loginAdmin: async (email, password) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const response = await fetch(`${baseUrl}api/login/admin`, {
                         method: 'POST',
@@ -246,7 +242,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Editando Administrador 
             editarAdmin: async (adminBody, adminId) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
                     const response = await fetch(`${baseUrl}api/edit_admin/${adminId}`, {
@@ -287,7 +282,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             eliminarUsuarioAdmin: async (userId) => {
 
                 try {
-                    const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                     const token = getStore().token;
                     console.log("Eliminando usuario con ID:", userId);
                     console.log("Token de autenticación:", token);
@@ -325,7 +319,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             ,
             //editar un producto por su id
             editarProducto: async (productoBody, productoId, nuevaImagen = null) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
 
@@ -409,7 +402,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Ver todos los productos 
             getProductos: async () => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/'
 
                 try {
                     const store = getStore();
@@ -441,7 +433,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Ver un producto por su id 
             getProductoPorId: async (id) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const response = await fetch(`${baseUrl}api/producto/${id}`, {
                         method: 'GET',
@@ -476,7 +467,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
                 try {
                     const token = getStore().token;
-                    const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
 
                     const response = await fetch(`${baseUrl}api/delete_producto/${productoId}`, {
                         method: 'DELETE',
@@ -523,7 +513,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             crearProducto: async (name, descripcion, precio, imagen, cantidad, categoria_id) => {
                 console.log("Creando producto", name, descripcion, precio, imagen, cantidad)
 
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/'
 
                 try {
                     const formData = new FormData()
@@ -575,7 +564,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Agregar un producto al carrito 
             agregarProductoCarrito: async (productoId, cantidad = 1) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
                     let guestId = localStorage.getItem("guest_id");
@@ -611,7 +599,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             //Ver Carrito 
             verCarrito: async () => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 const token = getStore().token;
                 const guestId = localStorage.getItem("guest_id");
                 const url = token
@@ -629,7 +616,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             //Eliminar un producto del carrito por su id
             eliminarProductoCarrito: async (carritoId) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 carritoId = carritoId || getStore().carrito?.id || localStorage.getItem('id')
                 if (!carritoId) {
                     console.error("No se proporciono un ID valido", carritoId)
@@ -637,12 +623,14 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
                 try {
                     const token = getStore().token;
-                    const response = await fetch(`${baseUrl}api/delete_carrito/${carritoId}`, {
+                    const guestId = localStorage.getItem("guest_id");
+
+                    const response = await fetch(`${baseUrl}api/delete_carrito/${carritoId}?guest_id=${guestId}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`
-                        },
+                            ...(token ? { Authorization: `Bearer ${token}` } : {})
+                        }
                     });
                     if (!response.ok) {
                         const errorData = await response.json()
@@ -675,73 +663,103 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Editar el Producto del Carrito Reduciendo 
             reducirCantidadCarrito: async (carrito_id, cantidadActual) => {
-                const nuevaCantidad = cantidadActual - 1;
-                const token = getStore().token;
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+
+                const nuevaCantidad = cantidadActual - 1; // calcula la nueva cantidad restando 1
+
+                const token = getStore().token; // obtiene el token si el usuario está logueado
+                const guestId = localStorage.getItem("guest_id"); // obtiene el guest_id si es invitado
+
 
                 try {
+
                     const response = await fetch(`${baseUrl}api/carrito/${carrito_id}`, {
-                        method: "PUT",
+                        method: "PUT", // método HTTP para editar
                         headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`
+                            "Content-Type": "application/json", // indica que enviamos JSON
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}) // solo agrega token si existe
                         },
-                        body: JSON.stringify({ cantidad: nuevaCantidad })
+                        body: JSON.stringify({
+                            cantidad: nuevaCantidad, // cantidad actualizada
+                            guest_id: guestId // necesario para identificar al invitado
+                        })
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json();
+                        const errorData = await response.json(); // obtiene error del backend
                         throw new Error(errorData.error || "Error al reducir cantidad");
                     }
 
-                    const data = await response.json();
-                    console.log(data.message || data.msg);
-                    await getActions().verCarrito(); // refresca el carrito
+                    const data = await response.json(); // obtiene respuesta exitosa
+
+                    console.log(data.message || data.msg); // muestra mensaje del backend
+
+                    await getActions().verCarrito(); // vuelve a cargar el carrito actualizado
+
                 } catch (error) {
-                    console.error("Error al reducir cantidad:", error.message);
+
+                    console.error("Error al reducir cantidad:", error.message); // muestra error en consola
+
                 }
             },
             //Editar el Producto del Carrito Aumentando
             aumentarCantidadCarrito: async (carrito_id, cantidadActual) => {
-                const nuevaCantidad = cantidadActual + 1;
-                const token = getStore().token;
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+
+                const nuevaCantidad = cantidadActual + 1; // suma 1 a la cantidad actual
+
+                const token = getStore().token; // obtiene token si el usuario está logueado
+                const guestId = localStorage.getItem("guest_id"); // obtiene guest_id si es invitado
+
 
                 try {
+
                     const response = await fetch(`${baseUrl}api/carrito/${carrito_id}`, {
-                        method: "PUT",
+                        method: "PUT", // método PUT para actualizar recurso
                         headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`
+                            "Content-Type": "application/json", // enviamos JSON
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}) // solo agrega Authorization si hay token
                         },
-                        body: JSON.stringify({ cantidad: nuevaCantidad })
+                        body: JSON.stringify({
+                            cantidad: nuevaCantidad, // nueva cantidad
+                            guest_id: guestId // identificador del invitado
+                        })
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json();
+
+                        const errorData = await response.json(); // obtiene error del backend
+
                         throw new Error(errorData.error || "Error al aumentar cantidad");
+
                     }
 
-                    const data = await response.json();
-                    console.log(data.message || data.msg);
+                    const data = await response.json(); // obtiene respuesta del backend
+
+                    console.log(data.message || data.msg); // imprime mensaje de éxito
+
                     await getActions().verCarrito(); // refresca el carrito
+
                 } catch (error) {
-                    console.error("Error al aumentar cantidad:", error.message);
-                    swal("Error", error.message, "error");
+
+                    console.error("Error al aumentar cantidad:", error.message); // muestra error
+
+                    swal("Error", error.message, "error"); // alerta visual
+
                 }
+
             },
 
             //Eliminar Carrito Completo 
             vaciarCarrito: async () => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 const token = getStore().token;
 
                 try {
-                    const response = await fetch(`${baseUrl}api/carrito`, {
+                    const guestId = localStorage.getItem("guest_id");
+
+                    const response = await fetch(`${baseUrl}api/carrito?guest_id=${guestId}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`
+                            ...(token ? { Authorization: `Bearer ${token}` } : {})
                         }
                     });
 
@@ -761,7 +779,6 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
             getUsuario: async () => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const token = getStore().token;
                     const response = await fetch(`${baseUrl}api/user`, {
@@ -837,7 +854,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Ver Categorias en Navbar
             getCategorias: async () => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const store = getStore();
                     const response = await fetch(`${baseUrl}api/categoria`, {
@@ -865,7 +881,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             crearCategoria: async (nombre) => {
                 const token = localStorage.getItem("token");
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+
                 try {
                     const response = await fetch(`${baseUrl}api/categoria`, {
                         method: "POST",
@@ -890,7 +906,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             eliminarCategoria: async (categoria_id) => {
                 const token = localStorage.getItem("token");
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const response = await fetch(`${baseUrl}api/categoria/${categoria_id}`, {
                         method: "DELETE",
@@ -908,7 +923,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Ver Productos por su categoria  
             getProductosPorCategoria: async (categoria_id) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const store = getStore();
                     const response = await fetch(`${baseUrl}api/productos/categoria/${categoria_id}`, {
@@ -942,7 +956,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             //Informacion de Categoria 
             getCategoriaPorId: async (categoria_id) => {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const store = getStore();
                     const response = await fetch(`${baseUrl}api/categoria/${categoria_id}`, {
@@ -974,7 +987,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             //Nombre de la Categoria  
             editarCategoria: async (categoria_id, nuevoNombre) => {
                 const token = localStorage.getItem("token");
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                 try {
                     const response = await fetch(`${baseUrl}api/categoria/${categoria_id}`, {
                         method: "PUT",
@@ -995,9 +1007,68 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
 
+            // Asignar Producto Creado a Categoria: 
+            asignarCategoriaProducto: async (product_id, categoria_id) => {
+
+                const token = localStorage.getItem("token");
+
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/producto/${product_id}/categoria/${categoria_id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + token
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.msg || "Error asignando categoria");
+                    }
+
+                    await getActions().getProductos(); // refresca productos
+
+                } catch (error) {
+
+                    console.error(error);
+
+                }
+
+            },
+            //Quitar de Producto Creado de una Categoria: 
+            quitarCategoriaProducto: async (product_id) => {
+
+                const token = localStorage.getItem("token");
+
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/producto/${product_id}/categoria`, {
+                        method: "DELETE",
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.msg || "Error quitando categoria");
+                    }
+
+                    await getActions().getProductos();
+
+                } catch (error) {
+
+                    console.error(error);
+
+                }
+
+            },
+
             // 🔹 Crear Pedido (guest o usuario)
-            crearPedido: async (datosPedido) => { 
-                                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+            crearPedido: async (datosPedido) => {
 
                 try {
                     const store = getStore();
@@ -1039,8 +1110,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
 
             // 🔹 Simular Pago (PixelPay prueba)
-            pagarPedidoPrueba: async (pedido_id, metodo = "pixelpay") => { 
-                                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+            pagarPedidoPrueba: async (pedido_id, metodo = "pixelpay") => {
 
                 try {
                     const response = await fetch(`${baseUrl}pago/prueba`, {
@@ -1070,8 +1140,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
             // 🔹 Ver historial de pedidos (user o guest)
-            getHistorialPedidos: async () => { 
-                                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
+            getHistorialPedidos: async () => {
 
                 try {
                     const store = getStore();
@@ -1113,7 +1182,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             // 🔹 Registrar invitado rápido
             registrarInvitado: async (formData) => {
                 try {
-                const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/';
                     const response = await fetch(`${baseUrl}api/register`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },

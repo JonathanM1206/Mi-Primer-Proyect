@@ -62,6 +62,12 @@ const EditUsuario = () => {
         }
     }
 
+
+      const handleLogout = () => {
+    actions.logout();
+    navigate("/");
+
+  }
     useEffect(() => {
         if (store.user) {
             setUserData({
@@ -129,7 +135,8 @@ console.log("localStorage direccion:", userStorage?.direccion);
                 )}
                 {(role === 'user' || role === 'admin') && (
                     <>
-                        <button className='btn btn-danger' onClick={eliminarMe}>Eliminar Cuenta</button>
+                        <button className='btn btn-danger' onClick={eliminarMe}>Eliminar Cuenta</button> 
+                        <button  className='btn btn-warning' onClick={() => handleLogout()}>Logout</button>
                     </>
                 )}
 

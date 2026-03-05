@@ -21,7 +21,9 @@ import DetalleProducto from './pages/DetalleProducto.jsx';
 import NotFound from './pages/NotFound.jsx'; 
 import ListaUsuario from './pages/ListaUsuario.jsx'; // Asegúrate de tener esta página creada 
 import ProductosPorCategoria from './pages/ProductosPorCategoria.jsx';
-import Footer from './component/Footer.jsx';
+import Footer from './component/Footer.jsx'; 
+import { HistorialPedidos } from './pages/HistorialPedidos.jsx'; 
+import {PagoInvitado} from './pages/PagoInvitado.jsx'
 const Layout = () => { 
   const { store, actions } = useContext(Context); 
 
@@ -44,7 +46,8 @@ const Layout = () => {
                 <Route path="/loginUsuario" element={<LoginUsuario/>} /> 
                 <Route path="/editUsuario" element={<EditUsuario/>} /> 
                 <Route path="/listarProductos" element={<ListarProductos/>} /> 
-
+                <Route path="/HistorialPedidos" element={<HistorialPedidos/>}/> 
+                <Route path="/PagoInvitado" element={<PagoInvitado/>}/>
                  {/* Administrador */}
                  <Route path="/access-admin-1206" element={<LoginAdmin/>} />
                  <Route path="/editAdmin" element={<EditAdmin/>} />  
