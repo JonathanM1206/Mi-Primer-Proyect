@@ -42,7 +42,7 @@ const LoginUsuario = () => {
 
 
   return (
-    <div  className="d-flex justify-content-center  vh-100" style={{ background: "#247456" }}> 
+    <div  className="d-flex justify-content-center  vh-100" style={{ background: "#8bdabd" }}> 
       <div className="card p-4 shadow mt-5" style={{ width: "30rem", height:"30rem", borderRadius: "15px", backgroundColor: "#ffffff", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)" }}>  
         <h1>BIENVENIDO!</h1>
         <form onSubmit={handleSubmit}> 

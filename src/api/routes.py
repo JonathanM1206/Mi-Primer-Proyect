@@ -1,5 +1,6 @@
 import os
-from flask import Flask, request, jsonify, Blueprint   
+from flask import Flask, request, jsonify, Blueprint  
+import requests
 from api.models import db, User, Administrador, Product, Carrito, Post,Categoria, Pedido,PedidoItem,Pago
 from api.utils import APIException 
 from flask_cors import CORS 
@@ -931,7 +932,7 @@ def crear_pago_pixelpay():
 # ----------------------
 # Pago Transferencia
 # ----------------------
-@pagos_api.route('/pago/transferencia', methods=['POST'])
+@api.route('/pago/transferencia', methods=['POST'])
 def crear_pago_transferencia():
     data = request.get_json()
     pedido_id = data.get('pedido_id')
@@ -1076,6 +1077,139 @@ def admin_pagos_por_usuario(user_id):
 
 
 
+#Crear Pedidos: 
+@api.route('/pedido', methods=['POST'])
+def crear_pedido():
+
+    data = request.get_json()
+
+    total = data.get("total")
+    direccion = data.get("direccion")
+    guest_id = data.get("guest_id")
+    user_id = data.get("user_id")
+
+    # -----------------------------
+    # OBTENER CARRITO
+    # -----------------------------
+
+    if user_id:
+        carrito_items = Carrito.query.filter_by(user_id=user_id).all()
+    else:
+        carrito_items = Carrito.query.filter_by(guest_id=guest_id).all()
+
+    # validar carrito vacío
+    if not carrito_items:
+        return jsonify({"error": "El carrito está vacío"}), 400
+
+    # -----------------------------
+    # CREAR PEDIDO
+    # -----------------------------
+
+    nuevo_pedido = Pedido(
+        total=total,
+        direccion=direccion,
+        guest_id=guest_id,
+        user_id=user_id,
+        estado="pendiente"
+    )
+
+    db.session.add(nuevo_pedido)
+
+    db.session.flush()  # genera pedido_id sin commit
+
+    # -----------------------------
+    # CREAR ITEMS DEL PEDIDO
+    # -----------------------------
+
+    for item in carrito_items:
+
+        producto = Product.query.get(item.product_id)
+
+        pedido_item = PedidoItem(
+            pedido_id=nuevo_pedido.pedido_id,
+            product_id=item.product_id,
+            cantidad=item.cantidad,
+            precio_unitario=producto.precio
+        )
+
+        db.session.add(pedido_item)
+
+    # -----------------------------
+    # VACIAR CARRITO
+    # -----------------------------
+
+    if user_id:
+        Carrito.query.filter_by(user_id=user_id).delete()
+    else:
+        Carrito.query.filter_by(guest_id=guest_id).delete()
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Pedido creado",
+        "pedido_id": nuevo_pedido.pedido_id,
+        "total": nuevo_pedido.total
+    }), 201
+
+
+# ======================
+# Historial de pedidos usuario
+# ======================
+@api.route('/pedidos', methods=['GET'])
+def obtener_pedidos():
+
+    user_id = request.args.get("user_id")
+    guest_id = request.args.get("guest_id")
+
+    if user_id:
+
+        pedidos = Pedido.query.filter_by(user_id=user_id)\
+            .order_by(Pedido.fecha.desc()).all()
+
+    elif guest_id:
+
+        pedidos = Pedido.query.filter_by(guest_id=guest_id)\
+            .order_by(Pedido.fecha.desc()).all()
+
+    else:
+
+        return jsonify({"error": "Debe enviar user_id o guest_id"}), 400
+
+
+    resultado = []
+
+    for pedido in pedidos:
+
+        resultado.append({
+            "pedido_id": pedido.pedido_id,
+            "fecha": pedido.fecha.isoformat() if pedido.fecha else None,
+            "total": pedido.total,
+            "estado": pedido.estado,
+
+            "items": [
+                {
+                    "product_id": item.product_id,
+                    "nombre": item.product.name,
+                    "imagen": item.product.imagen,
+                    "cantidad": item.cantidad,
+                    "precio_unitario": item.precio_unitario
+                }
+                for item in pedido.items
+            ],
+
+            "pagos": [
+                {
+                    "metodo": pago.metodo,
+                    "estado": pago.estado,
+                    "referencia": pago.referencia
+                }
+                for pago in pedido.pagos
+            ]
+        })
+
+    return jsonify(resultado), 200
+
+
 # ======================
 # Obtener pedidos de un día específico
 # ======================
@@ -1117,7 +1251,7 @@ def pedidos_por_fecha(fecha):
             ]
         })
 
-    return jsonify(resultado), 200
+    return jsonify(resultado), 200 
 
 # Buscar productos
 @app.route('/productos/buscar')

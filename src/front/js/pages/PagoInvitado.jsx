@@ -5,12 +5,10 @@ import swal from "sweetalert";
 
 export const PagoInvitado = () => {
 
-    const { actions, store } = useContext(Context);
-    const navigate = useNavigate();
+    const { actions } = useContext(Context); // obtenemos actions
+    const navigate = useNavigate(); // hook para navegar
 
     const baseUrl = "https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/";
-
-    const [usuarioCreado, setUsuarioCreado] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -20,6 +18,7 @@ export const PagoInvitado = () => {
         password: ""
     });
 
+    // actualizar inputs
     const handleChange = (e) => {
 
         setFormData({
@@ -29,35 +28,46 @@ export const PagoInvitado = () => {
 
     };
 
-    const handleSubmit = async (e) => {
+    // -------------------------
+    // REGISTRAR + LOGIN
+    // -------------------------
+    const registrarYLogin = async () => {
 
-        e.preventDefault();
-
-        const registrado = await actions.registrarInvitado(formData);
+        const registrado = await actions.registroUsuario(
+            formData.name,
+            formData.correo,
+            formData.telefono,
+            formData.direccion,
+            formData.password
+        );
 
         if (!registrado) {
+
             swal("Error", "No se pudo registrar el usuario", "error");
-            return;
+            return false;
+
         }
 
-        swal("Usuario creado", "Ahora selecciona método de pago", "success");
+        await actions.loginUsuario(formData.correo, formData.password);
 
-        setUsuarioCreado(true);
+        return true;
     };
 
     // -------------------------
-    // TRANSFERENCIA
+    // PAGO TRANSFERENCIA
     // -------------------------
     const pagarTransferencia = async () => {
 
-        const pedidoCreado = await actions.crearPedido({
+        const ok = await registrarYLogin();
+
+        if (!ok) return;
+
+        const pedido = await actions.crearPedido({
             total: 50,
             direccion: formData.direccion
         });
 
-        const pedido = store.pedidoActual;
-
-        await fetch(`${baseUrl}api/pago/transferencia`, {
+        const response = await fetch(`${baseUrl}api/pago/transferencia`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -67,20 +77,35 @@ export const PagoInvitado = () => {
             })
         });
 
-        navigate("/historial");
+        if (!response.ok) {
+
+            swal("Error", "No se pudo crear el pago", "error");
+            return;
+
+        }
+
+        // 🔹 LIMPIAR CARRITO
+        await actions.vaciarCarrito();
+
+        swal("Pedido creado", "Pago por transferencia generado", "success");
+
+        navigate("/HistorialPedidos");
+
     };
 
     // -------------------------
-    // TARJETA PIXELPAY
+    // PAGO TARJETA
     // -------------------------
     const pagarTarjeta = async () => {
 
-        const pedidoCreado = await actions.crearPedido({
+        const ok = await registrarYLogin();
+
+        if (!ok) return;
+
+        const pedido = await actions.crearPedido({
             total: 50,
             direccion: formData.direccion
         });
-
-        const pedido = store.pedidoActual;
 
         const response = await fetch(`${baseUrl}api/pago/pixelpay`, {
             method: "POST",
@@ -94,96 +119,96 @@ export const PagoInvitado = () => {
 
         const data = await response.json();
 
+        if (!response.ok) {
+
+            swal("Error", "No se pudo iniciar el pago", "error");
+            return;
+
+        }
+
+        // 🔹 LIMPIAR CARRITO
+        await actions.vaciarCarrito();
+
         window.location.href = data.pago_url;
+
     };
 
     return (
 
-        <div className="container mt-5 my-5" >
+        <div className="container mt-5 my-5">
 
             <h3 className="text-center mb-4">Finaliza tu compra</h3>
 
-            {!usuarioCreado ? (
+            <form className="col-md-6 mx-auto">
 
-                <form className="col-md-6 mx-auto" onSubmit={handleSubmit}>
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Nombre y Apellido"
+                    className="form-control mb-3"
+                    onChange={handleChange}
+                    required
+                />
 
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Nombre y Apellido"
-                        className="form-control mb-3"
-                        onChange={handleChange}
-                        required
-                    />
+                <input
+                    type="email"
+                    name="correo"
+                    placeholder="Correo"
+                    className="form-control mb-3"
+                    onChange={handleChange}
+                    required
+                />
 
-                    <input
-                        type="email"
-                        name="correo"
-                        placeholder="Correo"
-                        className="form-control mb-3"
-                        onChange={handleChange}
-                        required
-                    />
+                <input
+                    type="text"
+                    name="telefono"
+                    placeholder="Telefono"
+                    className="form-control mb-3"
+                    onChange={handleChange}
+                    required
+                />
 
-                    <input
-                        type="text"
-                        name="telefono"
-                        placeholder="Telefono"
-                        className="form-control mb-3"
-                        onChange={handleChange}
-                        required
-                    />
+                <input
+                    type="text"
+                    name="direccion"
+                    placeholder="Direccion"
+                    className="form-control mb-3"
+                    onChange={handleChange}
+                    required
+                />
 
-                    <input
-                        type="text"
-                        name="direccion"
-                        placeholder="Direccion"
-                        className="form-control mb-3"
-                        onChange={handleChange}
-                        required
-                    />
-
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Contraseña"
-                        className="form-control mb-3"
-                        onChange={handleChange}
-                        required
-                    />
-
-                    <button className="btn btn-success w-100">
-
-                        Continuar
-
-                    </button>
-
-                </form>
-
-            ) : (
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Contraseña"
+                    className="form-control mb-4"
+                    onChange={handleChange}
+                    required
+                />
 
                 <div className="text-center">
 
-                    <h4>Selecciona método de pago</h4>
-
                     <button
+                        type="button"
                         className="btn btn-primary me-3"
                         onClick={pagarTransferencia}
                     >
-                        Transferencia
+                        Pagar por Transferencia
                     </button>
 
                     <button
+                        type="button"
                         className="btn btn-success"
                         onClick={pagarTarjeta}
                     >
-                        Tarjeta
+                        Pagar con Tarjeta
                     </button>
 
                 </div>
 
-            )}
+            </form>
 
         </div>
+
     );
 };

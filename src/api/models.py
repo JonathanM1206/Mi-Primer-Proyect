@@ -160,7 +160,8 @@ class Pedido(db.Model):
     __tablename__ = 'pedido'
     pedido_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=True)  # Puede ser guest
-    guest_id = db.Column(db.String(100), nullable=True)  # Para usuarios invitados
+    guest_id = db.Column(db.String(100), nullable=True)  # Para usuarios invitados 
+    direccion = db.Column(db.String(255))
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
     total = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(50), default='pendiente')  # pendiente, pagado, cancelado
@@ -174,7 +175,8 @@ class PedidoItem(db.Model):
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.pedido_id'))
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'))
     cantidad = db.Column(db.Integer, nullable=False)
-    precio_unitario = db.Column(db.Float, nullable=False)
+    precio_unitario = db.Column(db.Float, nullable=False) 
+    product = db.relationship("Product")
 
 class Pago(db.Model):
     __tablename__ = 'pago'

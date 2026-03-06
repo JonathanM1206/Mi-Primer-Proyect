@@ -10,30 +10,30 @@ const Carrito = () => {
 
   //Vaciar carrito Completo 
   const vaciandoCarrito = async () => {
-  const confirmar = await swal({
-    title: "¿Estás seguro?",
-    text: "¡No podrás deshacer esta acción!",
-    icon: "warning",
-    buttons: true,
-    dangerMode: true,
-  });
+    const confirmar = await swal({
+      title: "¿Estás seguro?",
+      text: "¡No podrás deshacer esta acción!",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+    });
 
-  if (confirmar) {
-    try {
-      await actions.vaciarCarrito();
-      await actions.verCarrito();
+    if (confirmar) {
+      try {
+        await actions.vaciarCarrito();
+        await actions.verCarrito();
 
-      if (store.carrito?.length === 0) {
-        swal("Carrito vacío", "El carrito se encuentra vacío ahora", "info");
-      } else {
-        swal("Carrito vaciado", "Todos los productos han sido eliminados", "success");
+        if (store.carrito?.length === 0) {
+          swal("Carrito vacío", "El carrito se encuentra vacío ahora", "info");
+        } else {
+          swal("Carrito vaciado", "Todos los productos han sido eliminados", "success");
+        }
+      } catch (error) {
+        console.error("Error al vaciar el carrito:", error);
+        swal("Error", "No se pudo vaciar el carrito", "error");
       }
-    } catch (error) {
-      console.error("Error al vaciar el carrito:", error);
-      swal("Error", "No se pudo vaciar el carrito", "error");
     }
-  }
-};
+  };
 
 
   // Reducir cantidad
@@ -56,17 +56,17 @@ const Carrito = () => {
     }
   };
 
- 
-// Aumentar cantidad
-const aumento = async (carrito_id, cantidadActual) => {
-  try {
-    await actions.aumentarCantidadCarrito(carrito_id, cantidadActual);
-    swal("Cantidad aumentada", "La cantidad del producto ha sido incrementada correctamente", "success");
-  } catch (error) {
-    console.error("Error al aumentar la cantidad:", error);
-    swal("Error", "No se pudo aumentar la cantidad del producto", "error");
-  }
-};
+
+  // Aumentar cantidad
+  const aumento = async (carrito_id, cantidadActual) => {
+    try {
+      await actions.aumentarCantidadCarrito(carrito_id, cantidadActual);
+      swal("Cantidad aumentada", "La cantidad del producto ha sido incrementada correctamente", "success");
+    } catch (error) {
+      console.error("Error al aumentar la cantidad:", error);
+      swal("Error", "No se pudo aumentar la cantidad del producto", "error");
+    }
+  };
 
 
   //Eliminar producto
@@ -154,7 +154,7 @@ const aumento = async (carrito_id, cantidadActual) => {
           ))}
 
         </div>
-      )} 
+      )}
 
 
       <button className="btn btn-danger" onClick={() => vaciandoCarrito()}>
@@ -162,7 +162,7 @@ const aumento = async (carrito_id, cantidadActual) => {
       </button>
 
 
-      {/* BOTON PAGAR AGREGADO */}
+      {/* BOTON PAGAR */}
       <div className="mt-3">
 
         <button
@@ -170,14 +170,22 @@ const aumento = async (carrito_id, cantidadActual) => {
           onClick={() => {
 
             if (store.token) {
-              navigate("/HistorialPedidos")
+
+              // Si el usuario esta logueado
+              navigate("/MetodoPago")
+
             } else {
+
+              // Si es invitado
               navigate("/PagoInvitado")
+
             }
 
           }}
         >
+
           Pagar
+
         </button>
 
       </div>

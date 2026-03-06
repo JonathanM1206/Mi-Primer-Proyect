@@ -19,8 +19,11 @@ from flask_cors import CORS
 
 # from models import Person
 app = Flask(__name__)   
-CORS(app, resources={r"/api/*": {"origins": "https://redesigned-halibut-6949wqj5p44xfrx46-5173.app.github.dev/"}})
-
+CORS(
+    app,
+    resources={r"/api/*": {"origins": "*"}},
+    supports_credentials=True
+)
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../uploads')
 
 if not os.path.exists(UPLOAD_FOLDER):
@@ -37,7 +40,7 @@ app.url_map.strict_slashes =False
 
 bcrypt=Bcrypt(app) 
 jwt=JWTManager(app) 
-CORS(app) 
+
 
 #database configuration 
 db_url = os.getenv("DATABASE_URL") 

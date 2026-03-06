@@ -75,11 +75,12 @@ const getState = ({ getStore, getActions, setStore }) => {
                         id: data.id
                     }));
                     console.log("Usuario", data);
-
+                      return true;  
                 } catch (error) {
                     console.error("Error al registrar el usuario:", error);
                     let store = getStore();
-                    setStore({ ...store, message: error.message || "Error al registrar el usuario" });
+                    setStore({ ...store, message: error.message || "Error al registrar el usuario" }); 
+                     return false; 
                 }
             },
             //Login de usuario 
@@ -1081,10 +1082,16 @@ const getState = ({ getStore, getActions, setStore }) => {
                         datosPedido.guest_id = nuevoGuestId;
                     }
 
-                    const response = await fetch(`${baseUrl}pedido`, {
+                    const payload = {
+                        ...datosPedido,
+                        user_id: store.user?.id || null,
+                        guest_id: store.guest_id
+                    }
+
+                    const response = await fetch(`${baseUrl}api/pedido`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(datosPedido),
+                        body: JSON.stringify(payload),
                     });
 
                     const data = await response.json();
@@ -1100,7 +1107,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                         message: data.msg,
                     });
 
-                    return true;
+                    return data;
 
                 } catch (error) {
                     console.error("Error al crear pedido:", error);
@@ -1143,19 +1150,27 @@ const getState = ({ getStore, getActions, setStore }) => {
             getHistorialPedidos: async () => {
 
                 try {
+
                     const store = getStore();
                     const user = store.user;
                     const guest_id = store.guest_id;
 
-                    let url = `${baseUrl}pedidos?`;
+                    console.log("USER:", user);
+                    console.log("GUEST_ID:", guest_id);
 
-                    if (user && user.user_id) {
-                        url += `user_id=${user.user_id}`;
-                    } else if (guest_id) {
+                    let url = `${baseUrl}api/pedidos?`;
+
+                    if (user && user.id) { // ⚠️ aquí estaba el posible error
+                        url += `user_id=${user.id}`;
+                    }
+                    else if (guest_id) {
                         url += `guest_id=${guest_id}`;
-                    } else {
+                    }
+                    else {
                         throw new Error("No se encontró usuario ni guest_id");
                     }
+
+                    console.log("URL CONSULTADA:", url);
 
                     const response = await fetch(url, {
                         method: "GET",
@@ -1163,6 +1178,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                     });
 
                     const data = await response.json();
+
+                    console.log("RESPUESTA BACKEND:", data);
 
                     if (!response.ok) {
                         throw new Error(data.error || "Error al obtener pedidos");
@@ -1175,42 +1192,57 @@ const getState = ({ getStore, getActions, setStore }) => {
                     });
 
                 } catch (error) {
+
                     console.error("Error al obtener historial:", error);
-                    setStore({ historialPedidos: [], message: error.message });
+
+                    setStore({
+                        historialPedidos: [],
+                        message: error.message
+                    });
+
                 }
             },
-            // 🔹 Registrar invitado rápido
-            registrarInvitado: async (formData) => {
+
+            // 🔹 Pagar por transferencia
+            pagarTransferencia: async (pedido_id) => {
+
                 try {
-                    const response = await fetch(`${baseUrl}api/register`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(formData)
+
+                    const response = await fetch(`${baseUrl}api/pago/transferencia`, {
+
+                        method: "POST", // tipo de petición
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            pedido_id: pedido_id
+                        })
+
                     });
 
                     const data = await response.json();
 
-                    if (!response.ok) throw new Error(data.msg || "Error al registrar usuario");
+                    if (!response.ok) {
 
-                    // Guardamos el token
-                    localStorage.setItem("token", data.token);
-                    localStorage.setItem("role", "user");
+                        throw new Error(data.error || "Error al crear pago");
 
-                    setStore({
-                        token: data.token,
-                        user: data.user,
-                        role: "user",
-                    });
+                    }
 
-                    return true;
+                    console.log("Pago por transferencia creado:", data);
+
+                    return data; // devolvemos el pago creado
 
                 } catch (error) {
-                    console.error("Error al registrar invitado:", error);
-                    setStore({ message: error.message });
-                    return false;
-                }
-            },
 
+                    console.error("Error en pago transferencia:", error);
+
+                    return null;
+
+                }
+
+            },
 
 
 

@@ -134,6 +134,12 @@ const navbar = () => {
                 <Link to='/editUsuario' style={{ color: "white", textDecoration: "none" }} className="btn btn-lg">
                   <strong>Editar Usuario</strong>
                 </Link>
+              </li> 
+
+               <li style={{ paddingLeft: "20px" }}>
+                <Link to='/HistorialPedidos' style={{ color: "white", textDecoration: "none" }} className="btn btn-lg">
+                  <strong>Historial de Pedidos</strong>
+                </Link>
               </li>
               <li style={{ paddingLeft: "20px" }}>
                 <Link style={{ color: "white", textDecoration: "none" }} to="/listarProductos" className="btn btn-lg">

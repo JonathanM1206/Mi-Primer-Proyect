@@ -23,7 +23,8 @@ import ListaUsuario from './pages/ListaUsuario.jsx'; // Asegúrate de tener esta
 import ProductosPorCategoria from './pages/ProductosPorCategoria.jsx';
 import Footer from './component/Footer.jsx'; 
 import { HistorialPedidos } from './pages/HistorialPedidos.jsx'; 
-import {PagoInvitado} from './pages/PagoInvitado.jsx'
+import {PagoInvitado} from './pages/PagoInvitado.jsx' 
+import { MetodoPago } from './pages/MetodoPago.jsx';
 const Layout = () => { 
   const { store, actions } = useContext(Context); 
 
@@ -47,7 +48,8 @@ const Layout = () => {
                 <Route path="/editUsuario" element={<EditUsuario/>} /> 
                 <Route path="/listarProductos" element={<ListarProductos/>} /> 
                 <Route path="/HistorialPedidos" element={<HistorialPedidos/>}/> 
-                <Route path="/PagoInvitado" element={<PagoInvitado/>}/>
+                <Route path="/PagoInvitado" element={<PagoInvitado/>}/> 
+                <Route path="/MetodoPago" element={<MetodoPago/>}/>
                  {/* Administrador */}
                  <Route path="/access-admin-1206" element={<LoginAdmin/>} />
                  <Route path="/editAdmin" element={<EditAdmin/>} />  
