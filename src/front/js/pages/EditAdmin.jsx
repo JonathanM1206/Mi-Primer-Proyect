@@ -29,13 +29,13 @@ const EditAdmin = () => {
         } catch (error) {
             console.error("Error al editar el Administrador:", error);
         }
-    }; 
+    };
 
-      const handleLogout = () => {
-    actions.logout();
-    navigate("/");
+    const handleLogout = () => {
+        actions.logout();
+        navigate("/");
 
-  }
+    }
 
     useEffect(() => {
         if (store.admin) {
@@ -131,6 +131,12 @@ const EditAdmin = () => {
                 )}
                 {/* Aquí espacio para agregar más botones */}
                 <div style={{ marginTop: '20px' }}>
+                    <button
+                        className="btn btn-warning"
+                        onClick={() => navigate("/admin/pedidos")}
+                    >
+                        Panel de Pedidos
+                    </button>
                     <button style={extraButton} onClick={() => handleLogout()}>Logout</button>
                 </div>
             </div>

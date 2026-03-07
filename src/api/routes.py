@@ -1162,29 +1162,38 @@ def obtener_pedidos():
     guest_id = request.args.get("guest_id")
 
     if user_id:
-
         pedidos = Pedido.query.filter_by(user_id=user_id)\
             .order_by(Pedido.fecha.desc()).all()
 
     elif guest_id:
-
         pedidos = Pedido.query.filter_by(guest_id=guest_id)\
             .order_by(Pedido.fecha.desc()).all()
 
     else:
-
         return jsonify({"error": "Debe enviar user_id o guest_id"}), 400
-
 
     resultado = []
 
     for pedido in pedidos:
+
+        usuario = pedido.user.serialize() if pedido.user else {
+            "name": "Invitado",
+            "email": None,
+            "telefono": None
+        }
 
         resultado.append({
             "pedido_id": pedido.pedido_id,
             "fecha": pedido.fecha.isoformat() if pedido.fecha else None,
             "total": pedido.total,
             "estado": pedido.estado,
+
+            "usuario": {
+                "name": usuario.get("name"),
+                "email": usuario.get("email"),
+                "telefono": usuario.get("telefono"),
+                "direccion": pedido.direccion
+            },
 
             "items": [
                 {
@@ -1215,35 +1224,52 @@ def obtener_pedidos():
 # ======================
 @api.route('/admin/pedidos/fecha/<fecha>', methods=['GET'])
 def pedidos_por_fecha(fecha):
+
     try:
-        # Convertir fecha string a datetime
         fecha_dt = datetime.strptime(fecha, "%Y-%m-%d")
     except ValueError:
-        return jsonify({"error": "Formato de fecha inválido. Use YYYY-MM-DD"}), 400
+        return jsonify({"error": "Formato inválido"}), 400
 
-    # Buscar pedidos de esa fecha
     pedidos = Pedido.query.filter(
         db.func.date(Pedido.fecha) == fecha_dt.date()
     ).all()
 
     resultado = []
+
     for pedido in pedidos:
-        usuario = pedido.user.serialize() if pedido.user else {"name": "Invitado", "email": "N/A"}
+
+        usuario = pedido.user.serialize() if pedido.user else {
+            "name": "Invitado",
+            "email": None,
+            "telefono": None,
+            "direccion": pedido.direccion
+        }
+
         resultado.append({
             "pedido_id": pedido.pedido_id,
             "fecha": pedido.fecha.isoformat(),
             "total": pedido.total,
             "estado": pedido.estado,
-            "usuario": usuario,
+
+            "usuario": {
+                "name": usuario.get("name"),
+                "email": usuario.get("email"),
+                "telefono": usuario.get("telefono"),
+                "direccion": pedido.direccion
+            },
+
             "items": [
                 {
                     "product_id": item.product_id,
+                    "nombre": item.product.name,
                     "cantidad": item.cantidad,
                     "precio_unitario": item.precio_unitario
                 } for item in pedido.items
             ],
+
             "pagos": [
                 {
+                    "pago_id": pago.pago_id,
                     "metodo": pago.metodo,
                     "estado": pago.estado,
                     "referencia": pago.referencia
@@ -1251,24 +1277,97 @@ def pedidos_por_fecha(fecha):
             ]
         })
 
-    return jsonify(resultado), 200 
+    return jsonify(resultado), 200
 
-# Buscar productos
-@app.route('/productos/buscar')
-def buscar_productos():
-    query = request.args.get('query', '')  # 🔹 Captura lo que escribiste en el input
-    if not query:
-        return jsonify([])  # si no hay nada, devuelve lista vacía
-    productos = Product.query.filter(Product.name.ilike(f'%{query}%')).all()  # Busca coincidencias
-    return jsonify([p.serialize() for p in productos])  # Devuelve JSON con los producto
+# ======================
+# Historial de pedidos por usuario ID
+# ======================
+@api.route('/pedidos/usuario/<int:user_id>', methods=['GET'])
+def pedidos_por_usuario(user_id):
 
-# Buscar usuarios
-@app.route('/usuarios/buscar')
-def buscar_usuarios():
-    query = request.args.get('query', '')
-    if not query:
-        return jsonify([])
-    usuarios = User.query.filter(User.name.ilike(f'%{query}%')).all()
-    return jsonify([u.serialize() for u in usuarios])
+    usuario = User.query.get(user_id)
+
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
 
 
+    pedidos = Pedido.query.filter_by(user_id=user_id)\
+        .order_by(Pedido.fecha.desc()).all()
+
+
+    resultado = []
+
+    for pedido in pedidos:
+
+        resultado.append({
+            "pedido_id": pedido.pedido_id,
+            "fecha": pedido.fecha.isoformat() if pedido.fecha else None,
+            "total": pedido.total,
+            "estado": pedido.estado,
+
+            "usuario": {
+                "user_id": usuario.user_id,
+                "name": usuario.name,
+                "email": usuario.email
+            },
+
+            "items": [
+                {
+                    "product_id": item.product_id,
+                    "nombre": item.product.name,
+                    "imagen": item.product.imagen,
+                    "cantidad": item.cantidad,
+                    "precio_unitario": item.precio_unitario
+                }
+                for item in pedido.items
+            ],
+
+            "pagos": [
+                {
+                    "metodo": pago.metodo,
+                    "estado": pago.estado,
+                    "referencia": pago.referencia
+                }
+                for pago in pedido.pagos
+            ]
+        })
+
+    return jsonify(resultado), 200
+
+
+#Buscar Productos 
+@api.route('/buscar/productos')  
+@jwt_required()
+def buscar_productos():  
+
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
+    
+    query=request.args.get('query','') #Capurtra lo que escriviste en el input 
+    if not query: 
+        return jsonify([]) #si no hay nada, devuelve lista vacia 
+    
+    product=Product.query.filter(Product.name.ilike(f'%{query}%')).all() #Busca Coincidencias  /api/buscar/productos?query=a
+
+    return jsonify([p.serialize()for p in product]) #Devuelve JSON para los productos 
+
+#Buscar Clientes 
+@api.route('/buscar/clientes')  
+@jwt_required()
+def buscar_clientes():  
+
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
+
+    query=request.args.get('query','') 
+    if not query: 
+        return jsonify([])#Sino hay nada devuelve lista vacia 
+    
+    clientes=User.query.filter(User.name.ilike(f'%{query}%')).all()#Buscar Coincidencias 
+    return jsonify([c.serialize() for c in clientes ])#Devuelve JSON para los clientes 

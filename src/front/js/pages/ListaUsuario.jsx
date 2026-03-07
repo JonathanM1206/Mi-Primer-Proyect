@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { Context } from '../store/appContext.jsx';
-import swal from 'sweetalert';
+import swal from 'sweetalert'; 
+import { useNavigate } from 'react-router-dom';
 
 const ListaUsuario = () => {
     const { store, actions } = useContext(Context);
-    const [usuarios, setUsuarios] = useState([]);
+    const [usuarios, setUsuarios] = useState([]); 
+    const navigate =useNavigate()
 
     const traeUsuarios = async () => {
         try {
@@ -61,7 +63,12 @@ if (usuarios.length === 0) {
                                 <p className='card-text'><strong>Direccion: </strong>{item.direccion}</p>
                                 <div className='d-flex justify-content-between'>
                                     <button className='btn btn-danger' onClick={() => eliminarUsuarioA(item.user_id)}>Eliminar</button>
-                                    <button className='btn btn-primary'>Ver Historial</button>
+                                     <button
+                                        className="btn btn-primary"
+                                        onClick={() => navigate(`/historial-cliente/${item.user_id}`)}
+                                    >
+                                        Ver Historial
+                                    </button>
                                 </div>
                             </div>
                         </div>

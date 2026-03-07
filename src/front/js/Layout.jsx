@@ -24,7 +24,11 @@ import ProductosPorCategoria from './pages/ProductosPorCategoria.jsx';
 import Footer from './component/Footer.jsx'; 
 import { HistorialPedidos } from './pages/HistorialPedidos.jsx'; 
 import {PagoInvitado} from './pages/PagoInvitado.jsx' 
-import { MetodoPago } from './pages/MetodoPago.jsx';
+import { MetodoPago } from './pages/MetodoPago.jsx'; 
+import BuscarProductos from "./pages/BuscarProductos.jsx" 
+import BuscarClientes from "./pages/BuscarClientes.jsx"  
+import HistorialCliente from "./pages/HistorialCliente.jsx"; 
+import AdminPedidos from "./pages/AdminPedidos"
 const Layout = () => { 
   const { store, actions } = useContext(Context); 
 
@@ -40,7 +44,12 @@ const Layout = () => {
                 {/* Rutas Generales para Usuario y Administrador */} 
                 <Route path='/Carrito' element={<Carrito/>} /> 
                 <Route path="/DetalleProducto/:id" element={<DetalleProducto/>} /> 
-                <Route path="/ProductosPorCategoria/:categoriaId" element={<ProductosPorCategoria />} />
+                <Route path="/ProductosPorCategoria/:categoriaId" element={<ProductosPorCategoria />} />  
+                <Route path="/buscar-productos" element={<BuscarProductos/>}/> 
+                <Route path="/buscar-clientes" element={<BuscarClientes/>}/> 
+
+                <Route path="/historial-cliente/:id" element={<HistorialCliente/>}/>
+
 
                 {/* USUARIO */}
                 <Route path="/registroUsuario" element={<RegistroUsuario/>}/> 
@@ -50,12 +59,13 @@ const Layout = () => {
                 <Route path="/HistorialPedidos" element={<HistorialPedidos/>}/> 
                 <Route path="/PagoInvitado" element={<PagoInvitado/>}/> 
                 <Route path="/MetodoPago" element={<MetodoPago/>}/>
-                 {/* Administrador */}
+                
+                {/* Administrador */}
                  <Route path="/access-admin-1206" element={<LoginAdmin/>} />
                  <Route path="/editAdmin" element={<EditAdmin/>} />  
                  <Route path="/crearProducto" element={<CrearProducto/>} />
                  <Route path="/listarUsuarios" element={<ListaUsuario/>} />
-            
+                <Route path="/admin/pedidos" element={<AdminPedidos/>}/>
                 <Route path="*" element={<NotFound/>} />
             </Routes> 
             <Footer/>

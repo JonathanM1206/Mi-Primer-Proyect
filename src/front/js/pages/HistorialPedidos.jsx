@@ -1,6 +1,6 @@
 import React, { useEffect, useContext } from "react";
 import { Context } from "../store/appContext";
-
+//LO QUE LE APARECE AL USUUARIO ESTA ES LA INFORMACION
 export const HistorialPedidos = () => {
 
     const { store, actions } = useContext(Context);
@@ -166,6 +166,24 @@ export const HistorialPedidos = () => {
                                         {new Date(pedido.fecha).toLocaleDateString()}
 
                                     </p>
+
+                                    {/* INFORMACION DEL CLIENTE */}
+
+                                    <div className="mt-2 mb-3">
+
+                                        <p>
+                                            <strong>Nombre:</strong> {pedido.usuario?.name || "Invitado"}
+                                        </p>
+
+                                        <p>
+                                            <strong>Telefono:</strong> {pedido.usuario?.telefono || "No disponible"}
+                                        </p>
+
+                                        <p>
+                                            <strong>Direccion de envio:</strong> {pedido.usuario?.direccion || "No disponible"}
+                                        </p>
+
+                                    </div>
 
                                     {/* PRODUCTOS */}
 

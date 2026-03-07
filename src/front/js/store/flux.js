@@ -22,7 +22,9 @@ const getState = ({ getStore, getActions, setStore }) => {
             pedidoActual: null,
             guest_id: localStorage.getItem("guest_id") || null,
             historialPedidos: [],
-            message: '', // Para mensajes de error o info
+            message: '', // Para mensajes de error o info 
+            productosBuscados: [], // resultados de productos
+            clientesBuscados: [],  // resultados de clientes   
 
 
 
@@ -75,12 +77,12 @@ const getState = ({ getStore, getActions, setStore }) => {
                         id: data.id
                     }));
                     console.log("Usuario", data);
-                      return true;  
+                    return true;
                 } catch (error) {
                     console.error("Error al registrar el usuario:", error);
                     let store = getStore();
-                    setStore({ ...store, message: error.message || "Error al registrar el usuario" }); 
-                     return false; 
+                    setStore({ ...store, message: error.message || "Error al registrar el usuario" });
+                    return false;
                 }
             },
             //Login de usuario 
@@ -1203,6 +1205,34 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
 
+            // Pedido por ID de User: 
+            getPedidosPorUsuario: async (user_id) => {
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/pedidos/usuario/${user_id}`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Error al obtener pedidos");
+                    }
+
+                    const data = await response.json();
+
+                    setStore({ historialPedidos: data });
+
+                } catch (error) {
+
+                    console.error("Error:", error);
+
+                }
+
+            },
+
             // 🔹 Pagar por transferencia
             pagarTransferencia: async (pedido_id) => {
 
@@ -1242,6 +1272,124 @@ const getState = ({ getStore, getActions, setStore }) => {
 
                 }
 
+            },
+
+
+            //Pedidos Por Fechas: 
+            getPedidosPorFecha: async (fecha) => {
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/admin/pedidos/fecha/${fecha}`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    })
+
+                    const data = await response.json()
+
+                    if (!response.ok) {
+                        throw new Error(data.error)
+                    }
+
+                    setStore({ pedidos: data })
+
+                } catch (error) {
+
+                    console.error("Error:", error)
+
+                }
+
+            },
+
+            //Actualizar Estado: 
+            actualizarEstadoPago: async (pago_id, estado) => {
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/pago/${pago_id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ estado })
+                    })
+
+                    const data = await response.json()
+
+                    if (!response.ok) {
+                        throw new Error(data.error)
+                    }
+
+                    swal("Actualizado", "Estado actualizado", "success")
+
+                } catch (error) {
+
+                    swal("Error", error.message, "error")
+
+                }
+
+            },
+
+
+            //Buscadores para Productos y CLientes 
+            buscarProductos: async (query) => {
+                const token = getStore().token;
+                try {
+                    const response = await fetch(`${baseUrl}/api/buscar/productos?query=${query}`, {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+
+
+                    if (!response.ok) {
+                        throw new Error("Error al buscar productos");
+                    }
+
+                    const data = await response.json();
+                    const store = getStore();
+
+                    setStore({
+                        ...store,
+                        productosBuscados: Array.isArray(data) ? data : []
+                    });
+
+                } catch (error) {
+                    console.error(error);
+                    setStore({ productosBuscados: [] });
+                }
+            },//Fin del buscarProductos 
+
+
+            buscarClientes: async (query) => {
+                const token = getStore().token;
+
+                try {
+                    const response = await fetch(`${baseUrl}/api/buscar/clientes?query=${query}`, {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Error al buscar clientes");
+                    }
+
+                    const data = await response.json();
+
+                    const store = getStore();
+                    setStore({
+                        ...store,
+                        clientesBuscados: data // array de clientes
+                    });
+
+                } catch (error) {
+                    console.error(error);
+                }
             },
 
 

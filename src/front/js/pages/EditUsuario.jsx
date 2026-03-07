@@ -23,7 +23,7 @@ const EditUsuario = () => {
     const eliminarMe = async () => {
         const userId = store.user?.id || localStorage.getItem("id");
         const confirmar = await swal({
-            title: "¿Estás seguro?",
+            title: "¿Estás seguro de Eliminar tu Cuenta?",
             text: "¡No podrás deshacer esta acción!",
             icon: "warning",
             buttons: true,

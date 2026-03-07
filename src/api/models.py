@@ -165,7 +165,9 @@ class Pedido(db.Model):
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
     total = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(50), default='pendiente')  # pendiente, pagado, cancelado
-
+    
+    #Relaciones 
+    user = db.relationship("User", backref="pedidos")
     pagos = db.relationship('Pago', backref='pedido', lazy=True)
     items = db.relationship('PedidoItem', backref='pedido', lazy=True)
 

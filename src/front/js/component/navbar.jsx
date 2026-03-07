@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import swal from 'sweetalert';
 import { Context } from '../store/appContext.jsx';
@@ -14,7 +14,22 @@ const navbar = () => {
   const navigate = useNavigate();
 
 
- 
+
+  const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [busquedaProducto, setBusquedaProducto] = useState("");
+
+
+
+  const buscarProductos = () => {
+    if (busquedaProducto.trim() === "") return;
+    navigate(`/buscar-productos?query=${busquedaProducto}`);
+  };
+
+  const buscarClientes = () => {
+    if (busquedaCliente.trim() === "") return;
+    navigate(`/buscar-clientes?query=${busquedaCliente}`);
+  };
+
 
 
   useEffect(() => {
@@ -35,9 +50,8 @@ const navbar = () => {
         <h2> Home</h2>
       </Link>
       <div style={{ flex: 1, padding: "0 30px" }}>
+
         <input
-          type="text"
-          placeholder="Buscar productos..."
           style={{
             width: "100%",
             maxWidth: "600px",
@@ -46,7 +60,14 @@ const navbar = () => {
             border: "none",
             marginLeft: "50px",
           }}
+          type="text"
+          placeholder="Buscar productos..."
+          value={busquedaProducto}
+          onChange={(e) => setBusquedaProducto(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && buscarProductos()}
+          className="search-input"
         />
+
       </div>
       <div className="" >
         <ul className="" style={{ listStyle: "none", display: "flex", justifyContent: "space-between", marginLeft: "50px" }}>
@@ -132,11 +153,11 @@ const navbar = () => {
 
               <li style={{ paddingLeft: "20px" }}>
                 <Link to='/editUsuario' style={{ color: "white", textDecoration: "none" }} className="btn btn-lg">
-                  <strong>Editar Usuario</strong>
+                  <strong>Mi Perfil</strong>
                 </Link>
-              </li> 
+              </li>
 
-               <li style={{ paddingLeft: "20px" }}>
+              <li style={{ paddingLeft: "20px" }}>
                 <Link to='/HistorialPedidos' style={{ color: "white", textDecoration: "none" }} className="btn btn-lg">
                   <strong>Historial de Pedidos</strong>
                 </Link>
@@ -146,7 +167,7 @@ const navbar = () => {
                   <strong>Productos</strong>
                 </Link>
               </li>
-                {/* Botón Categoria */}
+              {/* Botón Categoria */}
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="categoriasDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   Categorías
@@ -206,9 +227,25 @@ const navbar = () => {
           }
           {role === "admin" && (
             <>
+              <input
+                style={{
+                  width: "100%",
+                  maxWidth: "600px",
+                  padding: "8px",
+                  borderRadius: "4px",
+                  border: "none",
+                  marginLeft: "50px",
+                }} type="text"
+                placeholder="Buscar clientes..."
+                value={busquedaCliente}
+                onChange={(e) => setBusquedaCliente(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && buscarClientes()}
+                className="search-input"
+              />
+
               <li style={{ paddingLeft: "20px" }}>
                 <Link to='/editAdmin' style={{ color: "white", textDecoration: "none" }} className="btn btn-lg">
-                  <strong>Editar Admin</strong>
+                  <strong>Perfil de Admin</strong>
                 </Link>
               </li>
               <li style={{ paddingLeft: "20px" }}>
@@ -221,7 +258,7 @@ const navbar = () => {
                   <strong>Productos</strong>
                 </Link>
               </li>
-                                      {/* Botón Categoria */}
+              {/* Botón Categoria */}
 
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="categoriasDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -308,7 +345,7 @@ const navbar = () => {
           )
 
           }
-     
+
 
         </ul>
       </div>
