@@ -107,10 +107,17 @@ const AdminPedidos = () => {
 
                                                 <div>
 
-                                                    <span className="badge bg-warning">{pago?.estado}</span>
+                                                    <span
+                                                        className={`badge ${pago?.estado === "pagado"
+                                                            ? "bg-success"
+                                                            : "bg-warning"
+                                                            }`}
+                                                    >
+                                                        {pago?.estado}
+                                                    </span>
 
                                                     <button
-                                                        className="btn btn-sm btn-success ms-2"
+                                                        className="btn btn-sm btn-danger ms-2"
                                                         onClick={() => actions.actualizarEstadoPago(pago.pago_id, "pagado")}
                                                     >
                                                         Marcar Pagado
@@ -224,7 +231,7 @@ const AdminPedidos = () => {
                                                     <strong>Cliente:</strong> {pedido.usuario.name}
 
                                                     <br />
-                                                    
+
                                                     <strong>Direccion:</strong> {pedido.usuario.direccion}
 
                                                     <br />

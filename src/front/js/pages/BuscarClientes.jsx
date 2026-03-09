@@ -160,7 +160,7 @@ const BuscarClientes = () => {
 
                                     <button
                                         className="btn btn-primary"
-                                        onClick={() => navigate(`/historial-cliente/${cliente.user_id}`)}
+                                        onClick={() => navigate(`/historial-cliente/${item.user_id}`)}
                                     >
                                         Ver Historial
                                     </button>

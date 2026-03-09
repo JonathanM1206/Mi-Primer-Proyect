@@ -151,10 +151,7 @@ export const HistorialPedidos = () => {
 
                                         <h5>Pedido #{pedido.pedido_id}</h5>
 
-                                        <span className={`estado Lps. {pedido.estado}`}>
-                                            {pedido.estado}
-                                        </span>
-
+                                     
                                     </div>
 
                                     {/* FECHA SIN HORA */}

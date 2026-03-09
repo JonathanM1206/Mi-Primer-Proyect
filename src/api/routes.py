@@ -1077,28 +1077,53 @@ def admin_pagos_por_usuario(user_id):
 
 
 
-#Crear Pedidos: 
+# ======================
+# CREAR PEDIDO
+# ======================
+
 @api.route('/pedido', methods=['POST'])
 def crear_pedido():
 
-    data = request.get_json()
+    data = request.get_json()  # obtenemos datos enviados desde frontend
 
-    total = data.get("total")
-    direccion = data.get("direccion")
-    guest_id = data.get("guest_id")
-    user_id = data.get("user_id")
+    total = data.get("total")  # total enviado
+    direccion = data.get("direccion")  # dirección del pedido
+    guest_id = data.get("guest_id")  # id invitado
+    user_id = data.get("user_id")  # id usuario
+
+    # -----------------------------
+    # MIGRAR CARRITO GUEST → USER
+    # -----------------------------
+
+    if user_id and guest_id:
+
+        carrito_guest = Carrito.query.filter_by(guest_id=guest_id).all()  
+        # buscamos carrito del invitado
+
+        for item in carrito_guest:
+
+            item.user_id = user_id  # asignamos ahora al usuario
+            item.guest_id = None    # quitamos guest_id
+
+        db.session.commit()  # guardamos cambios
 
     # -----------------------------
     # OBTENER CARRITO
     # -----------------------------
 
+    carrito_items = []
+
     if user_id:
-        carrito_items = Carrito.query.filter_by(user_id=user_id).all()
-    else:
-        carrito_items = Carrito.query.filter_by(guest_id=guest_id).all()
+        carrito_items = Carrito.query.filter_by(user_id=user_id).all()  
+        # buscamos carrito del usuario
+
+    if not carrito_items and guest_id:
+        carrito_items = Carrito.query.filter_by(guest_id=guest_id).all()  
+        # si no hay carrito user buscamos guest
 
     # validar carrito vacío
     if not carrito_items:
+
         return jsonify({"error": "El carrito está vacío"}), 400
 
     # -----------------------------
@@ -1115,7 +1140,8 @@ def crear_pedido():
 
     db.session.add(nuevo_pedido)
 
-    db.session.flush()  # genera pedido_id sin commit
+    db.session.flush()  
+    # genera pedido_id antes del commit
 
     # -----------------------------
     # CREAR ITEMS DEL PEDIDO
@@ -1123,7 +1149,8 @@ def crear_pedido():
 
     for item in carrito_items:
 
-        producto = Product.query.get(item.product_id)
+        producto = Product.query.get(item.product_id)  
+        # buscamos producto
 
         pedido_item = PedidoItem(
             pedido_id=nuevo_pedido.pedido_id,
@@ -1139,8 +1166,11 @@ def crear_pedido():
     # -----------------------------
 
     if user_id:
+
         Carrito.query.filter_by(user_id=user_id).delete()
+
     else:
+
         Carrito.query.filter_by(guest_id=guest_id).delete()
 
     db.session.commit()
@@ -1150,7 +1180,6 @@ def crear_pedido():
         "pedido_id": nuevo_pedido.pedido_id,
         "total": nuevo_pedido.total
     }), 201
-
 
 # ======================
 # Historial de pedidos usuario

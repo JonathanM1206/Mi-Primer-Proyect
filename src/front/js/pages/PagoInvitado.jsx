@@ -56,43 +56,53 @@ export const PagoInvitado = () => {
     // -------------------------
     // PAGO TRANSFERENCIA
     // -------------------------
-    const pagarTransferencia = async () => {
+const pagarTransferencia = async () => {
 
-        const ok = await registrarYLogin();
+    const ok = await registrarYLogin(); // registrar usuario
 
-        if (!ok) return;
+    if (!ok) return;
 
-        const pedido = await actions.crearPedido({
-            total: 50,
-            direccion: formData.direccion
-        });
+    const pedido = await actions.crearPedido({
+        total: 50,
+        direccion: formData.direccion
+    });
 
-        const response = await fetch(`${baseUrl}api/pago/transferencia`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                pedido_id: pedido.pedido_id
-            })
-        });
+    // validar que pedido exista
+    if (!pedido) {
 
-        if (!response.ok) {
+        swal("Error", "No se pudo crear el pedido", "error");
+        return;
 
-            swal("Error", "No se pudo crear el pago", "error");
-            return;
+    }
 
-        }
+    const response = await fetch(`${baseUrl}api/pago/transferencia`, {
 
-        // 🔹 LIMPIAR CARRITO
-        await actions.vaciarCarrito();
+        method: "POST",
 
-        swal("Pedido creado", "Pago por transferencia generado", "success");
+        headers: {
+            "Content-Type": "application/json"
+        },
 
-        navigate("/HistorialPedidos");
+        body: JSON.stringify({
+            pedido_id: pedido.pedido_id
+        })
 
-    };
+    });
 
+    if (!response.ok) {
+
+        swal("Error", "No se pudo crear el pago", "error");
+        return;
+
+    }
+
+    await actions.vaciarCarrito(); // limpiar carrito frontend
+
+    swal("Pedido creado", "Pago por transferencia generado", "success");
+
+    navigate("/HistorialPedidos");
+
+};
     // -------------------------
     // PAGO TARJETA
     // -------------------------

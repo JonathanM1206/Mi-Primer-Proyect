@@ -1073,51 +1073,69 @@ const getState = ({ getStore, getActions, setStore }) => {
             // 🔹 Crear Pedido (guest o usuario)
             crearPedido: async (datosPedido) => {
 
-                try {
-                    const store = getStore();
+    try {
 
-                    // Si no hay guest_id, generamos uno y lo guardamos
-                    if (!store.guest_id) {
-                        const nuevoGuestId = crypto.randomUUID();
-                        localStorage.setItem("guest_id", nuevoGuestId);
-                        setStore({ guest_id: nuevoGuestId });
-                        datosPedido.guest_id = nuevoGuestId;
-                    }
+        const store = getStore(); // obtenemos estado
 
-                    const payload = {
-                        ...datosPedido,
-                        user_id: store.user?.id || null,
-                        guest_id: store.guest_id
-                    }
+        let guestId = store.guest_id; // guest actual
 
-                    const response = await fetch(`${baseUrl}api/pedido`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload),
-                    });
+        if (!guestId) {
 
-                    const data = await response.json();
+            guestId = crypto.randomUUID(); // generamos uuid
+            localStorage.setItem("guest_id", guestId); // guardamos en localstorage
 
-                    if (!response.ok) {
-                        throw new Error(data.error || "Error al crear pedido");
-                    }
+            setStore({ guest_id: guestId }); // guardamos en store
 
-                    // Guardamos el pedido creado en el store
-                    setStore({
-                        ...store,
-                        pedidoActual: data,
-                        message: data.msg,
-                    });
+        }
 
-                    return data;
+        const payload = {
 
-                } catch (error) {
-                    console.error("Error al crear pedido:", error);
-                    setStore({ message: error.message });
-                    return false;
-                }
+            ...datosPedido, // datos del pedido
+            user_id: store.user?.id || null, // usuario si existe
+            guest_id: guestId // guest id
+
+        };
+
+        const response = await fetch(`${baseUrl}api/pedido`, {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
             },
 
+            body: JSON.stringify(payload)
+
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(data.error || "Error al crear pedido");
+
+        }
+
+        setStore({
+
+            pedidoActual: data,
+            message: data.msg
+
+        });
+
+        return data;
+
+    } catch (error) {
+
+        console.error("Error al crear pedido:", error);
+
+        setStore({ message: error.message });
+
+        return false;
+
+    }
+
+},
             // 🔹 Simular Pago (PixelPay prueba)
             pagarPedidoPrueba: async (pedido_id, metodo = "pixelpay") => {
 
@@ -1304,34 +1322,68 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
 
             //Actualizar Estado: 
-            actualizarEstadoPago: async (pago_id, estado) => {
+        // 🔹 Actualizar Estado de Pago
+actualizarEstadoPago: async (pago_id, estado) => {
 
-                try {
+    const store = getStore(); // obtenemos el estado actual
 
-                    const response = await fetch(`${baseUrl}api/pago/${pago_id}`, {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ estado })
-                    })
+    try {
 
-                    const data = await response.json()
+        const response = await fetch(`${baseUrl}api/pago/${pago_id}`, {
+            method: "PUT", // método para actualizar
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ estado }) // enviamos el nuevo estado
+        });
 
-                    if (!response.ok) {
-                        throw new Error(data.error)
+        const data = await response.json(); // convertimos respuesta a JSON
+
+        if (!response.ok) {
+            throw new Error(data.error || "Error actualizando pago");
+        }
+
+        // 🔹 ACTUALIZAR STORE LOCALMENTE
+        const pedidosActualizados = store.pedidos.map(pedido => {
+
+            return {
+
+                ...pedido, // copiamos el pedido
+
+                pagos: pedido.pagos.map(pago => {
+
+                    // si encontramos el pago que actualizamos
+                    if (pago.pago_id === pago_id) {
+
+                        return {
+                            ...pago,
+                            estado: estado // cambiamos estado
+                        };
+
                     }
 
-                    swal("Actualizado", "Estado actualizado", "success")
+                    return pago; // si no es el pago correcto lo dejamos igual
 
-                } catch (error) {
+                })
 
-                    swal("Error", error.message, "error")
+            };
 
-                }
+        });
 
-            },
+        // guardamos el nuevo estado en el store
+        setStore({
+            pedidos: pedidosActualizados
+        });
 
+        swal("Actualizado", "Estado actualizado", "success");
+
+    } catch (error) {
+
+        swal("Error", error.message, "error");
+
+    }
+
+},
 
             //Buscadores para Productos y CLientes 
             buscarProductos: async (query) => {
