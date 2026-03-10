@@ -1,8 +1,14 @@
 
 from flask_sqlalchemy import SQLAlchemy 
-from datetime import datetime
+from datetime import datetime 
+import pytz #Importar para hora Honduras
 
-db=SQLAlchemy()  
+db=SQLAlchemy()   
+
+def hora_honduras():  #Funciona para hacer la Hora Honduras en el pedido
+    tz = pytz.timezone("America/Tegucigalpa")
+    ahora = datetime.now(tz)
+    return ahora.replace(tzinfo=None)
 
 class User(db.Model): 
     __tablename__='user' 
@@ -162,10 +168,11 @@ class Pedido(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=True)  # Puede ser guest
     guest_id = db.Column(db.String(100), nullable=True)  # Para usuarios invitados 
     direccion = db.Column(db.String(255))
-    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha = db.Column(db.DateTime, default=hora_honduras)
     total = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(50), default='pendiente')  # pendiente, pagado, cancelado
-    
+    estado_envio = db.Column(db.String(50), default='preparando') #Estadod de envio , seria enviado y Entregado 
+    comentario = db.Column(db.Text, nullable=True)
     #Relaciones 
     user = db.relationship("User", backref="pedidos")
     pagos = db.relationship('Pago', backref='pedido', lazy=True)
@@ -187,4 +194,4 @@ class Pago(db.Model):
     metodo = db.Column(db.String(50))  # pixelpay, tarjeta, efectivo, etc
     estado = db.Column(db.String(50), default='pendiente')  # pendiente, completado, fallido
     referencia = db.Column(db.String(200))  # ID de la transacción externa
-    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha = db.Column(db.DateTime, default=hora_honduras)

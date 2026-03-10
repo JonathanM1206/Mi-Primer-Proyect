@@ -151,17 +151,14 @@ export const HistorialPedidos = () => {
 
                                         <h5>Pedido #{pedido.pedido_id}</h5>
 
-                                     
+
                                     </div>
 
                                     {/* FECHA SIN HORA */}
-
                                     <p>
-
-                                        <strong>Fecha:</strong>{" "}
-
-                                        {new Date(pedido.fecha).toLocaleDateString()}
-
+                                        <strong>Fecha:</strong> {new Date(pedido.fecha).toLocaleDateString()}
+                                        <br />
+                                        <strong>Hora:</strong> {new Date(pedido.fecha).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                     </p>
 
                                     {/* INFORMACION DEL CLIENTE */}
@@ -256,7 +253,30 @@ export const HistorialPedidos = () => {
 
                                                     <br />
 
-                                                    Estado: {pago.estado}
+                                                    Estado de Pago: <span className={`badge ${pago?.estado === "pagado"
+                                                        ? "bg-success" 
+                                                        : pago.estado ==="cancelado" 
+                                                        ?"bg-danger"
+                                                        : "bg-warning"
+                                                        }`}>  {pago?.estado} </span>
+                                                    <div>
+
+                                                        Estado de Envío: 
+
+                                                          <span className={`badge ${pedido.estado_envio === "preparando"
+                                                                ? "bg-primary"
+                                                                : pedido.estado_envio === "enviado"
+                                                                    ? "bg-success"
+                                                                    : pedido.estado_envio === "entregado"
+                                                                        ? "bg-success"
+                                                                        : "bg-secondary"
+                                                            }`}>
+
+                                                              {pedido.estado_envio}
+
+                                                        </span>
+
+                                                    </div>
 
                                                 </div>
 

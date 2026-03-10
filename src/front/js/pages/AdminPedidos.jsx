@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react"
 import { Context } from "../store/appContext"
+import swal from "sweetalert"
 
 const AdminPedidos = () => {
 
@@ -14,6 +15,10 @@ const AdminPedidos = () => {
     const [clienteAbierto, setClienteAbierto] = useState(null)
 
     const [tracking, setTracking] = useState("")
+
+    // estados para comentarios
+    const [comentarios, setComentarios] = useState({})
+    const [editando, setEditando] = useState(null)
 
     useEffect(() => {
 
@@ -34,12 +39,23 @@ const AdminPedidos = () => {
 
     }
 
+    const guardarComentario = async (pedido_id) => {
+
+        const comentario = comentarios[pedido_id] ?? ""
+
+        await actions.actualizarComentarioPedido(pedido_id, comentario)
+
+        setEditando(null)
+
+        swal("Guardado", "Comentario guardado exitosamente", "success")
+
+    }
+
     return (
 
         <div className="container mt-4">
 
             <h2 className="mb-4">Panel Administrador Pedidos</h2>
-
 
             <div className="mb-3">
 
@@ -54,7 +70,6 @@ const AdminPedidos = () => {
 
             </div>
 
-
             <div className="table-responsive">
 
                 <table className="table table-bordered">
@@ -64,14 +79,17 @@ const AdminPedidos = () => {
                         <tr>
 
                             <th>ID</th>
+                            <th>Fecha</th>
                             <th>Cliente</th>
                             <th>Total</th>
                             <th>Pago</th>
                             <th>Estado</th>
+                            <th>Envío</th>
                             <th>Productos</th>
                             <th>Cliente Info</th>
                             <th>Tracking</th>
                             <th>Contacto</th>
+                            <th>Comentarios</th>
 
                         </tr>
 
@@ -83,6 +101,10 @@ const AdminPedidos = () => {
 
                             const pago = pedido.pagos[0]
 
+                            const totalCalculado = pedido.items.reduce((total, item) => {
+                                return total + (item.cantidad * item.precio_unitario)
+                            }, 0)
+
                             return (
 
                                 <React.Fragment key={pedido.pedido_id}>
@@ -91,9 +113,21 @@ const AdminPedidos = () => {
 
                                         <td>{pedido.pedido_id}</td>
 
+                                        <td>
+                                            {pedido.fecha ? (
+                                                <>
+                                                    {new Date(pedido.fecha).toLocaleDateString()}
+                                                    <br />
+                                                    <small className="text-muted">
+                                                        {new Date(pedido.fecha).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                    </small>
+                                                </>
+                                            ) : "Sin fecha"}
+                                        </td>
+
                                         <td>{pedido.usuario.name}</td>
 
-                                        <td>Lps {pedido.total}</td>
+                                        <td>Lps {totalCalculado}</td>
 
                                         <td>{pago?.metodo}</td>
 
@@ -110,22 +144,66 @@ const AdminPedidos = () => {
                                                     <span
                                                         className={`badge ${pago?.estado === "pagado"
                                                             ? "bg-success"
-                                                            : "bg-warning"
+                                                            : pago.estado === "cancelado"
+                                                                ? "bg-danger"
+                                                                : "bg-warning"
                                                             }`}
                                                     >
                                                         {pago?.estado}
                                                     </span>
 
-                                                    <button
-                                                        className="btn btn-sm btn-danger ms-2"
-                                                        onClick={() => actions.actualizarEstadoPago(pago.pago_id, "pagado")}
+                                                    <select
+                                                        className="form-select form-select-sm mt-1"
+                                                        value={pago?.estado}
+                                                        onChange={(e) => actions.actualizarEstadoPago(pago.pago_id, e.target.value)}
                                                     >
-                                                        Marcar Pagado
-                                                    </button>
+
+                                                        <option value="pendiente">Pendiente</option>
+                                                        <option value="pagado">Pagado</option>
+                                                        <option value="cancelado">Cancelado</option>
+
+                                                    </select>
 
                                                 </div>
 
                                             )}
+
+                                        </td>
+
+                                        <td>
+
+                                            <div>
+
+                                                <span
+                                                    className={`badge ${pedido.estado_envio === "preparando"
+                                                        ? "bg-primary"
+                                                        : pedido.estado_envio === "enviado"
+                                                            ? "bg-success"
+                                                            : pedido.estado_envio === "entregado"
+                                                                ? "bg-success"
+                                                                : pedido.estado_envio === "cancelado"
+                                                                    ? "bg-danger"
+                                                                    : "bg-secondary"
+                                                        }`}
+                                                >
+
+                                                    {pedido.estado_envio}
+
+                                                </span>
+
+                                                <select
+                                                    className="form-select form-select-sm mt-1"
+                                                    value={pedido.estado_envio}
+                                                    onChange={(e) => actions.actualizarEstadoEnvio(pedido.pedido_id, e.target.value)}
+                                                >
+
+                                                    <option value="preparando">Preparando</option>
+                                                    <option value="enviado">Enviado</option>
+                                                    <option value="entregado">Entregado</option>
+
+                                                </select>
+
+                                            </div>
 
                                         </td>
 
@@ -185,14 +263,63 @@ const AdminPedidos = () => {
 
                                         </td>
 
-                                    </tr>
+                                        {/* COLUMNA COMENTARIOS */}
 
+                                        <td>
+
+                                            {editando === pedido.pedido_id ? (
+
+                                                <>
+
+                                                    <textarea
+                                                        className="form-control"
+                                                        rows="2"
+                                                        value={comentarios[pedido.pedido_id] ?? pedido.comentario ?? ""}
+                                                        onChange={(e) =>
+                                                            setComentarios({
+                                                                ...comentarios,
+                                                                [pedido.pedido_id]: e.target.value
+                                                            })
+                                                        }
+                                                    />
+
+                                                    <button
+                                                        className="btn btn-success btn-sm mt-1"
+                                                        onClick={() => guardarComentario(pedido.pedido_id)}
+                                                    >
+                                                        Guardar
+                                                    </button>
+
+                                                </>
+
+                                            ) : (
+
+                                                <>
+
+                                                    <div style={{ fontSize: "13px" }}>
+                                                        {pedido.comentario || "Sin comentario"}
+                                                    </div>
+
+                                                    <button
+                                                        className="btn btn-secondary btn-sm mt-1"
+                                                        onClick={() => setEditando(pedido.pedido_id)}
+                                                    >
+                                                        Editar
+                                                    </button>
+
+                                                </>
+
+                                            )}
+
+                                        </td>
+
+                                    </tr>
 
                                     {pedidoAbierto === pedido.pedido_id && (
 
                                         <tr>
 
-                                            <td colSpan="9">
+                                            <td colSpan="12">
 
                                                 <ul className="list-group">
 
@@ -220,14 +347,14 @@ const AdminPedidos = () => {
 
                                     )}
 
-
                                     {clienteAbierto === pedido.pedido_id && (
 
                                         <tr>
 
-                                            <td colSpan="9">
+                                            <td colSpan="12">
 
                                                 <div>
+
                                                     <strong>Cliente:</strong> {pedido.usuario.name}
 
                                                     <br />

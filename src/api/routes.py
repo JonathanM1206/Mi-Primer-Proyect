@@ -973,10 +973,10 @@ def ver_todos_pagos():
             "referencia": p.referencia,
             "monto_total": pedido.total if pedido else 0,
             "fecha_pago": p.fecha.isoformat(),
-            "usuario": {
-                "nombre": pedido.pago.nombre if pedido and pedido.pago else "Invitado",
-                "email": pedido.pago.email if pedido and pedido.pago else None
-            },
+           "usuario": {
+    "nombre": pedido.user.name if pedido and pedido.user else "Invitado",
+    "email": pedido.user.email if pedido and pedido.user else None
+},
             "items": [
                 {
                     "product_id": i.product_id,
@@ -1028,9 +1028,31 @@ def ver_pagos_usuario():
         })
     return jsonify(resultado), 200 
 
-
 # ======================
-# Actualizar estado del pago
+# Cancelar pedido
+# ======================
+
+@api.route('/pedido/<int:pedido_id>/cancelar', methods=['PUT'])
+def cancelar_pedido(pedido_id):
+
+    pedido = Pedido.query.get(pedido_id)
+
+    if not pedido:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+
+    pedido.estado = "cancelado"
+    pedido.estado_envio = "cancelado"
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Pedido cancelado",
+        "pedido_id": pedido.pedido_id,
+        "estado": pedido.estado,
+        "estado_envio": pedido.estado_envio
+    }), 200
+# ======================
+# Actualizar estado del pago de PAGADO Y PENDIENTE
 # ======================
 @api.route('/pago/<int:pago_id>', methods=['PUT'])
 def actualizar_estado_pago(pago_id):
@@ -1048,8 +1070,41 @@ def actualizar_estado_pago(pago_id):
         "msg": "Estado del pago actualizado",
         "pago_id": pago.pago_id,
         "estado": pago.estado
+    }), 200 
+    
+
+# ======================
+# Actualizar estado del pago de ENVIADO y ENRTEGADO
+# ======================
+@api.route('/pedido/<int:pedido_id>/envio', methods=['PUT'])
+def actualizar_estado_envio(pedido_id):
+
+    data = request.get_json()
+
+    estado_envio = data.get("estado_envio")
+
+    estados_validos = ["preparando", "enviado", "entregado"]
+
+    if estado_envio not in estados_validos:
+        return jsonify({"error": "Estado de envío inválido"}), 400
+
+    pedido = Pedido.query.get(pedido_id)
+
+    if not pedido:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+
+    pedido.estado_envio = estado_envio
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Estado de envío actualizado",
+        "pedido_id": pedido.pedido_id,
+        "estado_envio": pedido.estado_envio
     }), 200
 
+
+# EL ADMIN VE LO PAGOS EN UNA TABLA
 @api.route('/admin/pagos/usuario/<int:user_id>', methods=['GET'])
 def admin_pagos_por_usuario(user_id):
     pagos = Pago.query.join(Pedido).filter(Pedido.user_id == user_id).all()
@@ -1135,7 +1190,8 @@ def crear_pedido():
         direccion=direccion,
         guest_id=guest_id,
         user_id=user_id,
-        estado="pendiente"
+        estado="pendiente", 
+        estado_envio="preparando"
     )
 
     db.session.add(nuevo_pedido)
@@ -1216,6 +1272,8 @@ def obtener_pedidos():
             "fecha": pedido.fecha.isoformat() if pedido.fecha else None,
             "total": pedido.total,
             "estado": pedido.estado,
+            "estado_envio": pedido.estado_envio, 
+            "comentario": pedido.comentario,
 
             "usuario": {
                 "name": usuario.get("name"),
@@ -1278,7 +1336,9 @@ def pedidos_por_fecha(fecha):
             "pedido_id": pedido.pedido_id,
             "fecha": pedido.fecha.isoformat(),
             "total": pedido.total,
-            "estado": pedido.estado,
+            "estado": pedido.estado, 
+            "estado_envio": pedido.estado_envio, 
+            "comentario": pedido.comentario,
 
             "usuario": {
                 "name": usuario.get("name"),
@@ -1332,8 +1392,10 @@ def pedidos_por_usuario(user_id):
             "pedido_id": pedido.pedido_id,
             "fecha": pedido.fecha.isoformat() if pedido.fecha else None,
             "total": pedido.total,
-            "estado": pedido.estado,
-
+            "estado": pedido.estado, 
+            "estado_envio": pedido.estado_envio,
+            "comentario": pedido.comentario,
+            
             "usuario": {
                 "user_id": usuario.user_id,
                 "name": usuario.name,
@@ -1400,3 +1462,27 @@ def buscar_clientes():
     
     clientes=User.query.filter(User.name.ilike(f'%{query}%')).all()#Buscar Coincidencias 
     return jsonify([c.serialize() for c in clientes ])#Devuelve JSON para los clientes 
+ 
+ 
+#Ruta para guardar comentarios en los pedidos: 
+@api.route('/pedido/<int:pedido_id>/comentario', methods=['PUT'])
+def actualizar_comentario(pedido_id):
+
+    data = request.get_json()
+
+    comentario = data.get("comentario")
+
+    pedido = Pedido.query.get(pedido_id)
+
+    if not pedido:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+
+    pedido.comentario = comentario
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Comentario guardado",
+        "pedido_id": pedido.pedido_id,
+        "comentario": pedido.comentario
+    }), 200

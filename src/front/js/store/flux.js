@@ -1073,69 +1073,69 @@ const getState = ({ getStore, getActions, setStore }) => {
             // 🔹 Crear Pedido (guest o usuario)
             crearPedido: async (datosPedido) => {
 
-    try {
+                try {
 
-        const store = getStore(); // obtenemos estado
+                    const store = getStore(); // obtenemos estado
 
-        let guestId = store.guest_id; // guest actual
+                    let guestId = store.guest_id; // guest actual
 
-        if (!guestId) {
+                    if (!guestId) {
 
-            guestId = crypto.randomUUID(); // generamos uuid
-            localStorage.setItem("guest_id", guestId); // guardamos en localstorage
+                        guestId = crypto.randomUUID(); // generamos uuid
+                        localStorage.setItem("guest_id", guestId); // guardamos en localstorage
 
-            setStore({ guest_id: guestId }); // guardamos en store
+                        setStore({ guest_id: guestId }); // guardamos en store
 
-        }
+                    }
 
-        const payload = {
+                    const payload = {
 
-            ...datosPedido, // datos del pedido
-            user_id: store.user?.id || null, // usuario si existe
-            guest_id: guestId // guest id
+                        ...datosPedido, // datos del pedido
+                        user_id: store.user?.id || null, // usuario si existe
+                        guest_id: guestId // guest id
 
-        };
+                    };
 
-        const response = await fetch(`${baseUrl}api/pedido`, {
+                    const response = await fetch(`${baseUrl}api/pedido`, {
 
-            method: "POST",
+                        method: "POST",
 
-            headers: {
-                "Content-Type": "application/json"
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify(payload)
+
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+
+                        throw new Error(data.error || "Error al crear pedido");
+
+                    }
+
+                    setStore({
+
+                        pedidoActual: data,
+                        message: data.msg
+
+                    });
+
+                    return data;
+
+                } catch (error) {
+
+                    console.error("Error al crear pedido:", error);
+
+                    setStore({ message: error.message });
+
+                    return false;
+
+                }
+
             },
-
-            body: JSON.stringify(payload)
-
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(data.error || "Error al crear pedido");
-
-        }
-
-        setStore({
-
-            pedidoActual: data,
-            message: data.msg
-
-        });
-
-        return data;
-
-    } catch (error) {
-
-        console.error("Error al crear pedido:", error);
-
-        setStore({ message: error.message });
-
-        return false;
-
-    }
-
-},
             // 🔹 Simular Pago (PixelPay prueba)
             pagarPedidoPrueba: async (pedido_id, metodo = "pixelpay") => {
 
@@ -1321,69 +1321,158 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             },
 
-            //Actualizar Estado: 
-        // 🔹 Actualizar Estado de Pago
-actualizarEstadoPago: async (pago_id, estado) => {
+            //Actualizar Estado:  De pendiente a Pagado
+            // 🔹 Actualizar Estado de Pago
+            actualizarEstadoPago: async (pago_id, estado) => {
 
-    const store = getStore(); // obtenemos el estado actual
+                const store = getStore(); // obtenemos el estado actual
 
-    try {
+                try {
 
-        const response = await fetch(`${baseUrl}api/pago/${pago_id}`, {
-            method: "PUT", // método para actualizar
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ estado }) // enviamos el nuevo estado
-        });
+                    const response = await fetch(`${baseUrl}api/pago/${pago_id}`, {
+                        method: "PUT", // método para actualizar
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ estado }) // enviamos el nuevo estado
+                    });
 
-        const data = await response.json(); // convertimos respuesta a JSON
+                    const data = await response.json(); // convertimos respuesta a JSON
 
-        if (!response.ok) {
-            throw new Error(data.error || "Error actualizando pago");
-        }
-
-        // 🔹 ACTUALIZAR STORE LOCALMENTE
-        const pedidosActualizados = store.pedidos.map(pedido => {
-
-            return {
-
-                ...pedido, // copiamos el pedido
-
-                pagos: pedido.pagos.map(pago => {
-
-                    // si encontramos el pago que actualizamos
-                    if (pago.pago_id === pago_id) {
-
-                        return {
-                            ...pago,
-                            estado: estado // cambiamos estado
-                        };
-
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error actualizando pago");
                     }
 
-                    return pago; // si no es el pago correcto lo dejamos igual
+                    // 🔹 ACTUALIZAR STORE LOCALMENTE
+                    const pedidosActualizados = store.pedidos.map(pedido => {
 
-                })
+                        return {
 
-            };
+                            ...pedido, // copiamos el pedido
 
-        });
+                            pagos: pedido.pagos.map(pago => {
 
-        // guardamos el nuevo estado en el store
-        setStore({
-            pedidos: pedidosActualizados
-        });
+                                // si encontramos el pago que actualizamos
+                                if (pago.pago_id === pago_id) {
 
-        swal("Actualizado", "Estado actualizado", "success");
+                                    return {
+                                        ...pago,
+                                        estado: estado // cambiamos estado
+                                    };
 
-    } catch (error) {
+                                }
 
-        swal("Error", error.message, "error");
+                                return pago; // si no es el pago correcto lo dejamos igual
 
-    }
+                            })
 
-},
+                        };
+
+                    });
+
+                    // guardamos el nuevo estado en el store
+                    setStore({
+                        pedidos: pedidosActualizados
+                    });
+
+                    swal("Actualizado", "Estado actualizado", "success");
+
+                } catch (error) {
+
+                    swal("Error", error.message, "error");
+
+                }
+
+            },
+            // 🔹 Actualizar estado de envío  PREPARANDO O ENTREGADO
+            actualizarEstadoEnvio: async (pedido_id, estado_envio) => {
+
+                const store = getStore();
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/pedido/${pedido_id}/envio`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ estado_envio })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error actualizando envío");
+                    }
+
+                    const pedidosActualizados = store.pedidos.map(pedido => {
+
+                        if (pedido.pedido_id === pedido_id) {
+                            return {
+                                ...pedido,
+                                estado_envio: estado_envio
+                            };
+                        }
+
+                        return pedido;
+                    });
+
+                    setStore({ pedidos: pedidosActualizados });
+
+                    swal("Actualizado", "Estado de envío actualizado", "success");
+
+                } catch (error) {
+
+                    swal("Error", error.message, "error");
+
+                }
+
+            },
+            // 🔹 Cancelar pedido
+            cancelarPedido: async (pedido_id) => {
+
+                const store = getStore()
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/pedido/${pedido_id}/cancelar`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    })
+
+                    const data = await response.json()
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error cancelando pedido")
+                    }
+
+                    // actualizar store
+                    const pedidosActualizados = store.pedidos.map(pedido => {
+
+                        if (pedido.pedido_id === pedido_id) {
+                            return {
+                                ...pedido,
+                                estado: "cancelado",
+                                estado_envio: "cancelado"
+                            }
+                        }
+
+                        return pedido
+                    })
+
+                    setStore({ pedidos: pedidosActualizados })
+
+                    swal("Cancelado", "Pedido cancelado correctamente", "success")
+
+                } catch (error) {
+
+                    swal("Error", error.message, "error")
+
+                }
+
+            },
 
             //Buscadores para Productos y CLientes 
             buscarProductos: async (query) => {
@@ -1444,7 +1533,57 @@ actualizarEstadoPago: async (pago_id, estado) => {
                 }
             },
 
+            //Guardar Comentarios en cada pedido
+            //Guardar Comentarios en cada pedido
+            actualizarComentarioPedido: async (pedido_id, comentario) => {
 
+                const store = getStore() // obtenemos el store actual
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/pedido/${pedido_id}/comentario`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ comentario })
+                    })
+
+                    const data = await response.json()
+
+                    if (!response.ok) {
+                        throw new Error(data.error)
+                    }
+
+                    // 🔹 ACTUALIZAR EL STORE
+                    const pedidosActualizados = store.pedidos.map(pedido => {
+
+                        if (pedido.pedido_id === pedido_id) {
+
+                            return {
+                                ...pedido,
+                                comentario: comentario // cambiamos comentario
+                            }
+
+                        }
+
+                        return pedido
+
+                    })
+
+                    setStore({
+                        pedidos: pedidosActualizados
+                    })
+
+                    swal("Guardado", "Comentario actualizado", "success")
+
+                } catch (error) {
+
+                    swal("Error", error.message, "error")
+
+                }
+
+            },
 
 
         }
