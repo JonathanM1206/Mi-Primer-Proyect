@@ -1476,13 +1476,10 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             //Buscadores para Productos y CLientes 
             buscarProductos: async (query) => {
-                const token = getStore().token;
                 try {
                     const response = await fetch(`${baseUrl}/api/buscar/productos?query=${query}`, {
-                        method: 'GET',
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
+                        method: 'GET'
+                     
                     });
 
 

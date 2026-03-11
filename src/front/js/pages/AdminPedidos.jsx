@@ -239,11 +239,16 @@ const AdminPedidos = () => {
                                             />
 
                                         </td>
-
                                         <td>
 
                                             <a
-                                                href={`https://wa.me/${pedido.usuario.telefono}`}
+                                                href={`https://wa.me/${pedido.usuario.telefono}?text=${encodeURIComponent(
+                                                    `Hola ${pedido.usuario.name}, tu pedido #${pedido.pedido_id} ya fue enviado.
+
+Tracking: ${tracking}
+
+Tu pedido va en camino 🚚`
+                                                )}`}
                                                 target="_blank"
                                                 rel="noreferrer"
                                             >
@@ -253,7 +258,15 @@ const AdminPedidos = () => {
                                             </a>
 
                                             <a
-                                                href={`mailto:${pedido.usuario.email}`}
+                                                href={`mailto:${pedido.usuario.email}?subject=Tu pedido fue enviado&body=${encodeURIComponent(
+                                                    `Hola ${pedido.usuario.name},
+
+                                                    Tu pedido #${pedido.pedido_id} fue enviado.
+
+                                                    Tracking: ${tracking}
+
+                                                    Gracias por tu compra.`
+                                                )}`}
                                                 className="ms-3"
                                             >
 

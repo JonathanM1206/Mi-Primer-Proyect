@@ -8,7 +8,87 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt, verify_jwt_in_request  
 from datetime import timedelta,datetime  
 from werkzeug.utils import secure_filename
-import uuid  # para generar guest_id únicos
+import uuid  # para generar guest_id únicos 
+
+#Enviar Mails: 
+from flask_mail import Message
+
+
+
+def enviar_correo(destino, asunto, cuerpo):
+
+    try:
+        from app import mail
+
+        msg = Message(
+            subject=asunto,
+            recipients=[destino],
+            body=cuerpo,
+            sender=os.getenv("MAIL_USERNAME")
+        )
+
+        mail.send(msg)
+
+    except Exception as e:
+        print("Error enviando correo:", e) 
+    
+    
+def correo_bienvenida(usuario):
+    
+    cuerpo = f"""
+Hola {usuario.name}
+
+Bienvenido a nuestra tienda.
+
+Tu cuenta fue creada correctamente.
+
+Email: {usuario.email}
+
+Gracias por registrarte.
+"""
+
+    enviar_correo(
+        usuario.email,
+        "Bienvenido a nuestra tienda",
+        cuerpo
+    ) 
+    
+def correo_recibo_pedido(usuario, pedido, items):
+    
+    detalle_productos = ""
+
+    for item in items:
+
+        detalle_productos += f"""
+Producto: {item.product.name}
+Cantidad: {item.cantidad}
+Precio: L {item.precio_unitario}
+"""
+
+    cuerpo = f"""
+Hola {usuario.name}
+
+Tu pedido fue creado correctamente.
+
+Numero de pedido: {pedido.pedido_id}
+
+Direccion de envio:
+{pedido.direccion}
+
+Productos:
+{detalle_productos}
+
+Total: L {pedido.total}
+
+Gracias por tu compra.
+"""
+
+    enviar_correo(
+        usuario.email,
+        "Confirmación de pedido",
+        cuerpo
+    )
+
  
 
 UPLOAD_FOLDER = './uploads'  # Carpeta donde guardarás las imágenes
@@ -59,7 +139,8 @@ def get_user():
         return jsonify({"error":str(e)}),500 
     
 @api.route('/user', methods=['POST']) 
-def create_user(): 
+def create_user():  
+    
     data= request.get_json()
     try:
         #Validacion de Campos requeridos 
@@ -84,7 +165,10 @@ def create_user():
         )
         #Guardar usuario en la base de datos 
         db.session.add(new_user) 
-        db.session.commit()  
+        db.session.commit()   
+        
+        correo_bienvenida(new_user) 
+        
 
         #Datos a retornar (sin Contrasena por seguridad) 
         ok_to_share={ 
@@ -1229,7 +1313,16 @@ def crear_pedido():
 
         Carrito.query.filter_by(guest_id=guest_id).delete()
 
-    db.session.commit()
+    db.session.commit() 
+    
+    if user_id:
+        usuario = User.query.get(user_id)
+
+        correo_recibo_pedido(
+        usuario,
+        nuevo_pedido,
+        nuevo_pedido.items
+    )
 
     return jsonify({
         "msg": "Pedido creado",
@@ -1428,15 +1521,7 @@ def pedidos_por_usuario(user_id):
 
 #Buscar Productos 
 @api.route('/buscar/productos')  
-@jwt_required()
 def buscar_productos():  
-
-    admin_id = get_jwt_identity()
-    admin = Administrador.query.get(admin_id)
-
-    if not admin or admin.role != "admin":
-        return jsonify({"msg": "Acceso denegado"}), 403
-    
     query=request.args.get('query','') #Capurtra lo que escriviste en el input 
     if not query: 
         return jsonify([]) #si no hay nada, devuelve lista vacia 
