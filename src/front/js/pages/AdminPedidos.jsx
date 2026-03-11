@@ -14,7 +14,7 @@ const AdminPedidos = () => {
 
     const [clienteAbierto, setClienteAbierto] = useState(null)
 
-    const [tracking, setTracking] = useState("")
+    const [tracking, setTracking] = useState({}) //para evitar que se escriba en todos los input
 
     // estados para comentarios
     const [comentarios, setComentarios] = useState({})
@@ -234,8 +234,13 @@ const AdminPedidos = () => {
                                             <input
                                                 className="form-control"
                                                 placeholder="Tracking #"
-                                                value={tracking}
-                                                onChange={(e) => setTracking(e.target.value)}
+                                                value={tracking[pedido.pedido_id] || ""}
+                                                onChange={(e) =>
+                                                    setTracking({
+                                                        ...tracking,
+                                                        [pedido.pedido_id]: e.target.value
+                                                    })
+                                                }
                                             />
 
                                         </td>
@@ -245,9 +250,9 @@ const AdminPedidos = () => {
                                                 href={`https://wa.me/${pedido.usuario.telefono}?text=${encodeURIComponent(
                                                     `Hola ${pedido.usuario.name}, tu pedido #${pedido.pedido_id} ya fue enviado.
 
-Tracking: ${tracking}
+                                                    Tracking: ${tracking[pedido.pedido_id] || ""}
 
-Tu pedido va en camino 🚚`
+                                                    Tu pedido va en camino`
                                                 )}`}
                                                 target="_blank"
                                                 rel="noreferrer"
@@ -263,7 +268,7 @@ Tu pedido va en camino 🚚`
 
                                                     Tu pedido #${pedido.pedido_id} fue enviado.
 
-                                                    Tracking: ${tracking}
+                                                    Tracking: ${tracking[pedido.pedido_id] || ""}
 
                                                     Gracias por tu compra.`
                                                 )}`}
