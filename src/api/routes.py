@@ -52,7 +52,7 @@ Gracias por registrarte.
         "Bienvenido a nuestra tienda",
         cuerpo
     ) 
-    
+    #Correo al crear el pedido Enviar una factura:
 def correo_recibo_pedido(usuario, pedido, items):
     
     detalle_productos = ""
@@ -78,7 +78,9 @@ Direccion de envio:
 Productos:
 {detalle_productos}
 
-Total: L {pedido.total}
+Total: L {pedido.total} 
+
+Porfavor
 
 Gracias por tu compra.
 """
@@ -88,7 +90,89 @@ Gracias por tu compra.
         "Confirmación de pedido",
         cuerpo
     )
+#Correo se envia al hacer un pago en trasnferencia: 
+def correo_pago_transferencia(usuario, pedido):
 
+    # números de cuenta (ejemplo)
+    cuenta_bac = "123456789012"
+    cuenta_atlantida = "987654321098"
+
+    cuerpo = f"""
+Hola {usuario.name},
+
+Gracias por tu compra en nuestra tienda.
+
+Tu pedido ha sido registrado correctamente y está pendiente de pago por transferencia bancaria.
+
+Información del pedido
+----------------------
+Número de pedido: {pedido.pedido_id}
+Total a pagar: L {pedido.total}
+
+Datos para realizar la transferencia
+------------------------------------
+
+Banco BAC
+Cuenta: {cuenta_bac}
+
+Banco Atlántida
+Cuenta: {cuenta_atlantida}
+
+Importante:
+Por favor realiza la transferencia por el monto exacto del pedido.
+
+Una vez realizada la transferencia, puedes enviar el comprobante respondiendo a este correo o por nuestro WhatsApp para confirmar tu pago.
+
+Dirección de envío:
+{pedido.direccion}
+
+Muchas gracias por confiar en nosotros.
+
+Fuente de Salud Bethel
+"""
+
+    enviar_correo(
+        usuario.email,
+        "Instrucciones para completar tu pago por transferencia",
+        cuerpo
+    ) 
+ 
+ #Correo Pagar al Recibir
+    
+def correo_pago_recibir(usuario, pedido):
+
+    cuerpo = f"""
+Hola {usuario.name},
+
+Gracias por tu compra en Fuente de Salud Bethel.
+
+Tu pedido ha sido registrado correctamente.
+
+Número de pedido: {pedido.pedido_id}
+Total del pedido: L {pedido.total}
+
+Método de pago seleccionado:
+PAGO CONTRA ENTREGA
+
+Esto significa que pagarás el pedido cuando lo recibas.
+
+Nuestro equipo estará preparando tu pedido.
+
+Cuando el paquete sea enviado recibirás el número de seguimiento (Tracking) por WhatsApp para que puedas rastrear tu envío.
+
+Dirección de entrega:
+{pedido.direccion}
+
+Muchas gracias por confiar en nosotros.
+
+Fuente de Salud Bethel
+"""
+
+    enviar_correo(
+        usuario.email,
+        "Confirmación de pedido - Pago contra entrega",
+        cuerpo
+    )
  
 
 UPLOAD_FOLDER = './uploads'  # Carpeta donde guardarás las imágenes
@@ -150,7 +234,7 @@ def create_user():
         #Verificar si el usuario ya existe  
         existing_user=User.query.filter_by(email=data.get('email')).first() 
         if existing_user: 
-            return jsonify({'error':'Email arleady exists'}),400 
+            return jsonify({'error':'Email ya existe'}),400 
         
         #hash a la Contrasena 
         password_hash= bcrypt.generate_password_hash(data.get('password')).decode('utf-8') 
@@ -671,7 +755,7 @@ def agregar_a_carrito():
 
     # 🔹 Verificar stock
     if cantidad > product.cantidad:
-        return jsonify({'error': f'No hay suficiente stock. Disponible: {product.cantidad}'}), 400
+        return jsonify({'error': f'No hay suficiente stock.  Disponible: {product.cantidad}'}), 400
 
     # 🔹 Si es usuario logueado
     if user_id:
@@ -963,54 +1047,43 @@ def quitar_categoria_producto(product_id):
 
 
 # ----------------------
-# Pago PixelPay
+# Pago contra entrega
 # ----------------------
-@api.route('/pago/pixelpay', methods=['POST'])
-def crear_pago_pixelpay():
+@api.route('/pago/contra_entrega', methods=['POST'])
+def crear_pago_contra_entrega():
+
     data = request.get_json()
     pedido_id = data.get('pedido_id')
 
     pedido = Pedido.query.get(pedido_id)
+
     if not pedido:
         return jsonify({"error": "Pedido no encontrado"}), 404
 
-    PIXELPAY_API_KEY = os.getenv("PIXELPAY_API_KEY")
-    PIXELPAY_PRIVATE_KEY = os.getenv("PIXELPAY_PRIVATE_KEY")
-
-    payload = {
-        "amount": float(pedido.total),
-        "order_id": str(pedido.pedido_id),
-        "currency": "USD",
-        "description": f"Pago pedido #{pedido.pedido_id}",
-        "customer": {"name": pedido.pago.nombre if pedido.pago else "Cliente"}
-    }
-
-    url = "https://pixelpay.dev/api/v2/transaction/sale"
-    headers = {
-        "X-Api-Key": PIXELPAY_API_KEY,
-        "X-Private-Key": PIXELPAY_PRIVATE_KEY,
-        "Content-Type": "application/json"
-    }
-
-    response = requests.post(url, json=payload, headers=headers)
-    if response.status_code != 200:
-        return jsonify({"error": "No se pudo crear pago PixelPay", "detalle": response.json()}), 400
-
-    data_pixel = response.json()
     pago = Pago(
         pedido_id=pedido_id,
-        metodo="pixelpay",
+        metodo="pagar al recibir",  # 🔹 importante
         estado="pendiente",
-        referencia=data_pixel["data"]["transaction_id"]
+        referencia=str(uuid.uuid4())
     )
+
     db.session.add(pago)
     db.session.commit()
 
+    # enviar correo
+    if pedido.user_id:
+
+        usuario = User.query.get(pedido.user_id)
+
+        correo_pago_recibir(
+            usuario,
+            pedido
+        )
+
     return jsonify({
-        "msg": "Pago PixelPay creado",
+        "msg": "Pedido registrado para pago contra entrega",
         "pago_id": pago.pago_id,
-        "transaccion_id": pago.referencia,
-        "pago_url": data_pixel["data"]["payment_url"]
+        "estado": pago.estado
     }), 200
 
 # ----------------------
@@ -1033,7 +1106,19 @@ def crear_pago_transferencia():
     )
     db.session.add(pago)
     db.session.commit()
+    
+    # -----------------------------------
+    # ENVIAR CORREO CON DATOS DE PAGO
+    # -----------------------------------
 
+    if pedido.user_id:  # si es usuario registrado
+
+        usuario = User.query.get(pedido.user_id)
+
+        correo_pago_transferencia(
+            usuario,
+            pedido
+        )
     return jsonify({
         "msg": "Pago por transferencia creado",
         "pago_id": pago.pago_id,
@@ -1041,7 +1126,8 @@ def crear_pago_transferencia():
         "estado": pago.estado
     }), 200
 
-#Pagos de pago 
+
+#Panel Admin  de pago de los usuarios
 @api.route('/admin/pagos', methods=['GET'])
 def ver_todos_pagos():
     pagos = Pago.query.order_by(Pago.fecha.desc()).all()
@@ -1113,7 +1199,7 @@ def ver_pagos_usuario():
     return jsonify(resultado), 200 
 
 # ======================
-# Cancelar pedido
+# Cancelar pedido  (no se utiliza pero usar por si acaso se deja hasta produccion)
 # ======================
 
 @api.route('/pedido/<int:pedido_id>/cancelar', methods=['PUT'])
@@ -1462,7 +1548,7 @@ def pedidos_por_fecha(fecha):
     return jsonify(resultado), 200
 
 # ======================
-# Historial de pedidos por usuario ID
+# Historial de pedidos por usuario ID para el Admin
 # ======================
 @api.route('/pedidos/usuario/<int:user_id>', methods=['GET'])
 def pedidos_por_usuario(user_id):

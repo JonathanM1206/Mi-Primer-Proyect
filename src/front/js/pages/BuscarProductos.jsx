@@ -277,9 +277,16 @@ const BuscarProductos = () => {
 
                                         <p><strong>Descripción:</strong> {producto.descripcion}</p>
 
-                                        <p><strong>Precio:</strong> {producto.precio}</p>
+                                        <p><strong>Precio: </strong>Lps. {producto.precio}</p>
 
-                                        <p><strong>Disponibles:</strong> {producto.cantidad}</p>
+                                        <p>
+                                            <strong>Disponibles:</strong>{" "}
+                                            {
+                                                producto.cantidad === 0
+                                                    ? <span style={{ color: "red", fontWeight: "bold" }}>Sin Stock</span>
+                                                    : producto.cantidad
+                                            }
+                                        </p>
 
 
 

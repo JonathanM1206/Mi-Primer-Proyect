@@ -31,7 +31,9 @@ export const PagoInvitado = () => {
     // -------------------------
     // REGISTRAR + LOGIN
     // -------------------------
-    const registrarYLogin = async () => {
+const registrarYLogin = async () => {
+
+    try {
 
         const registrado = await actions.registroUsuario(
             formData.name,
@@ -42,71 +44,77 @@ export const PagoInvitado = () => {
         );
 
         if (!registrado) {
-
-            swal("Error", "No se pudo registrar el usuario", "error");
-            return false;
-
+            throw new Error("No se pudo registrar el usuario");
         }
 
         await actions.loginUsuario(formData.correo, formData.password);
 
         return true;
-    };
+
+    } catch (error) {
+
+        swal("Error", error.message, "error");
+
+        return false;
+
+    }
+
+};
 
     // -------------------------
     // PAGO TRANSFERENCIA
     // -------------------------
-const pagarTransferencia = async () => {
+    const pagarTransferencia = async () => {
 
-    const ok = await registrarYLogin(); // registrar usuario
+        const ok = await registrarYLogin(); // registrar usuario
 
-    if (!ok) return;
+        if (!ok) return;
 
-    const pedido = await actions.crearPedido({
-        total: 50,
-        direccion: formData.direccion
-    });
+        const pedido = await actions.crearPedido({
+            total: 50,
+            direccion: formData.direccion
+        });
 
-    // validar que pedido exista
-    if (!pedido) {
+        // validar que pedido exista
+        if (!pedido) {
 
-        swal("Error", "No se pudo crear el pedido", "error");
-        return;
+            swal("Error", "No se pudo crear el pedido", "error");
+            return;
 
-    }
+        }
 
-    const response = await fetch(`${baseUrl}api/pago/transferencia`, {
+        const response = await fetch(`${baseUrl}api/pago/transferencia`, {
 
-        method: "POST",
+            method: "POST",
 
-        headers: {
-            "Content-Type": "application/json"
-        },
+            headers: {
+                "Content-Type": "application/json"
+            },
 
-        body: JSON.stringify({
-            pedido_id: pedido.pedido_id
-        })
+            body: JSON.stringify({
+                pedido_id: pedido.pedido_id
+            })
 
-    });
+        });
 
-    if (!response.ok) {
+        if (!response.ok) {
 
-        swal("Error", "No se pudo crear el pago", "error");
-        return;
+            swal("Error", "No se pudo crear el pago", "error");
+            return;
 
-    }
+        }
 
-    await actions.vaciarCarrito(); // limpiar carrito frontend
+        await actions.vaciarCarrito(); // limpiar carrito frontend
 
-    swal("Pedido creado", "Pago por transferencia generado", "success");
+        swal("Pedido creado", "Pago por transferencia generado", "success");
 
-    navigate("/HistorialPedidos");
+        navigate("/HistorialPedidos");
 
-};
+    };
     // -------------------------
-    // PAGO TARJETA
+    // PAGO Al recibir
     // -------------------------
-    const pagarTarjeta = async () => {
+    const pagarContraEntrega = async () => {
 
         const ok = await registrarYLogin();
 
@@ -117,29 +125,43 @@ const pagarTransferencia = async () => {
             direccion: formData.direccion
         });
 
-        const response = await fetch(`${baseUrl}api/pago/pixelpay`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                pedido_id: pedido.pedido_id
-            })
-        });
+        if (!pedido) {
 
-        const data = await response.json();
-
-        if (!response.ok) {
-
-            swal("Error", "No se pudo iniciar el pago", "error");
+            swal("Error", "No se pudo crear el pedido", "error");
             return;
 
         }
 
-        // 🔹 LIMPIAR CARRITO
+        const response = await fetch(`${baseUrl}api/pago/contra_entrega`, {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                pedido_id: pedido.pedido_id
+            })
+
+        });
+
+        if (!response.ok) {
+
+            swal("Error", "No se pudo crear el pago", "error");
+            return;
+
+        }
+
         await actions.vaciarCarrito();
 
-        window.location.href = data.pago_url;
+        swal(
+            "Pedido creado",
+            "Pagarás cuando recibas el pedido. Recibirás tracking por WhatsApp.",
+            "success"
+        );
+
+        navigate("/HistorialPedidos");
 
     };
 
@@ -209,9 +231,9 @@ const pagarTransferencia = async () => {
                     <button
                         type="button"
                         className="btn btn-success"
-                        onClick={pagarTarjeta}
+                        onClick={pagarContraEntrega}
                     >
-                        Pagar con Tarjeta
+                        Pagar al recibir 💵
                     </button>
 
                 </div>

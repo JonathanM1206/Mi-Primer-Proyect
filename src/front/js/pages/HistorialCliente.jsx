@@ -6,6 +6,7 @@ const HistorialCliente = () => {
 
     const { store, actions } = useContext(Context);
 
+
     const { id } = useParams();
 
     useEffect(() => {
@@ -46,7 +47,7 @@ const HistorialCliente = () => {
 
                                 <h5>Cliente: {pedido.usuario.name}</h5>
 
-                                <p>Direccion: {pedido.usuario?.direccion}</p>
+                                <p>Direccion: {pedido.usuario.direccion}</p>
 
                                 <p>Pedido #{pedido.pedido_id}</p>
 
@@ -124,16 +125,21 @@ const HistorialCliente = () => {
                                                 Metodo: {pago.metodo}
 
                                                 <br />
+                                                <p> 
+                                                             Estado:    
 
-                                                Estado:  
-                                                <span className={`badge ${pago?.estado ==="pagado" 
+                                 <span className={`badge ${pago?.estado ==="pagado" 
                                                     ?"bg-success" 
                                                     :pago.estado === "cancelado" 
                                                     ?"bg-danger" 
                                                     :"bg-warning" 
                                                 }`}> 
-                                                    {pago?.estado}
+                                                  
+                                                           {pago?.estado}
                                                 </span>
+
+                                                </p>
+                                              
                                             
 
                                             </div>

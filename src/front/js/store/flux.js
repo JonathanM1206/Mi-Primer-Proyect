@@ -44,17 +44,25 @@ const getState = ({ getStore, getActions, setStore }) => {
                         body: JSON.stringify({ name, email, telefono, direccion, password })
                     })
                     if (!response.ok) {
+
                         let errorMessage = 'Algo salió mal. Intenta de nuevo.';
+
                         try {
 
                             const errorData = await response.json();
+
                             console.log("Error al registrar el usuario:", errorData);
+
                             errorMessage = errorData.error || errorData.message || "Error al registrar el usuario";
+
                         } catch (error) {
+
                             errorMessage = 'Error al procesar la respuesta del servidor';
-                            console.log('Datos del Usuario:', data);
+
                         }
-                        throw new Error("Error al registrar el usuario");
+
+                        throw new Error(errorMessage);
+
                     }
                     const data = await response.json();
                     console.log("Datos de usuario Registrado:", data);
@@ -82,7 +90,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.error("Error al registrar el usuario:", error);
                     let store = getStore();
                     setStore({ ...store, message: error.message || "Error al registrar el usuario" });
-                    return false;
+                    throw error;   // traiga el error del backend 
                 }
             },
             //Login de usuario 
@@ -1136,70 +1144,48 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
 
             },
-            // 🔹 Simular Pago (PixelPay prueba)
-            pagarPedidoPrueba: async (pedido_id, metodo = "pixelpay") => {
 
-                try {
-                    const response = await fetch(`${baseUrl}pago/prueba`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ pedido_id, metodo }),
-                    });
-
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(data.error || "Error al procesar pago");
-                    }
-
-                    console.log("✅ Pago completado:", data);
-                    setStore({
-                        ...getStore(),
-                        message: "Pago completado correctamente",
-                    });
-
-                    return true;
-
-                } catch (error) {
-                    console.error("Error en pago prueba:", error);
-                    setStore({ message: error.message });
-                    return false;
-                }
-            },
             // 🔹 Ver historial de pedidos (user o guest)
             getHistorialPedidos: async () => {
 
                 try {
 
                     const store = getStore();
-                    const user = store.user;
-                    const guest_id = store.guest_id;
 
-                    console.log("USER:", user);
-                    console.log("GUEST_ID:", guest_id);
+                    let user = store.user;
+
+                    // 🔹 si el store está vacío, leer localStorage
+                    if (!user || !user.id) {
+                        const localUser = JSON.parse(localStorage.getItem("user"));
+                        if (localUser) {
+                            user = localUser;
+                        }
+                    }
+
+                    const guest_id = store.guest_id;
 
                     let url = `${baseUrl}api/pedidos?`;
 
-                    if (user && user.id) { // ⚠️ aquí estaba el posible error
-                        url += `user_id=${user.id}`;
-                    }
-                    else if (guest_id) {
-                        url += `guest_id=${guest_id}`;
-                    }
-                    else {
-                        throw new Error("No se encontró usuario ni guest_id");
-                    }
+                    if (user && user.id) {
 
-                    console.log("URL CONSULTADA:", url);
+                        url += `user_id=${user.id}`;
+
+                    } else if (guest_id) {
+
+                        url += `guest_id=${guest_id}`;
+
+                    } else {
+
+                        throw new Error("No se encontró usuario ni guest_id");
+
+                    }
 
                     const response = await fetch(url, {
                         method: "GET",
-                        headers: { "Content-Type": "application/json" },
+                        headers: { "Content-Type": "application/json" }
                     });
 
                     const data = await response.json();
-
-                    console.log("RESPUESTA BACKEND:", data);
 
                     if (!response.ok) {
                         throw new Error(data.error || "Error al obtener pedidos");
@@ -1208,7 +1194,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     setStore({
                         ...store,
                         historialPedidos: data,
-                        message: "",
+                        message: ""
                     });
 
                 } catch (error) {
@@ -1221,6 +1207,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     });
 
                 }
+
             },
 
             // Pedido por ID de User: 
@@ -1246,6 +1233,43 @@ const getState = ({ getStore, getActions, setStore }) => {
                 } catch (error) {
 
                     console.error("Error:", error);
+
+                }
+
+            },
+            // 🔹 Pagar al recibir
+            pagarContraEntrega: async (pedido_id) => {
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/pago/contra_entrega`, {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            pedido_id: pedido_id
+                        })
+
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error al crear pago");
+                    }
+
+                    console.log("Pago contra entrega creado:", data);
+
+                    return data;
+
+                } catch (error) {
+
+                    console.error("Error pago contra entrega:", error);
+                    return null;
 
                 }
 
@@ -1479,7 +1503,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 try {
                     const response = await fetch(`${baseUrl}/api/buscar/productos?query=${query}`, {
                         method: 'GET'
-                     
+
                     });
 
 

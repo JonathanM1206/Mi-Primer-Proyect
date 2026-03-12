@@ -54,54 +54,45 @@ export const MetodoPago = () => {
     };
 
     // -------------------------
-    // TARJETA
+    // Pagar al Recibir 
     // -------------------------
-    const pagarTarjeta = async () => {
+    const pagarAlEntregar = async () => {
 
-        try {
+    try {
 
-            const pedido = await actions.crearPedido({
-                total: total,
-                direccion: store.user.direccion
-            });
+        const pedido = await actions.crearPedido({
+            total: total,
+            direccion: store.user.direccion
+        });
 
-            if (!pedido) {
-                throw new Error("No se pudo crear el pedido");
-            }
-
-            const response = await fetch(`${baseUrl}api/pago/pixelpay`, {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    pedido_id: pedido.pedido_id
-                })
-
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error);
-            }
-
-            // 🔹 LIMPIAR CARRITO
-            await actions.vaciarCarrito();
-
-            window.location.href = data.pago_url;
-
-        } catch (error) {
-
-            console.log(error);
-            swal("Error", "No se pudo iniciar el pago", "error");
-
+        if (!pedido) {
+            throw new Error("No se pudo crear el pedido");
         }
 
-    };
+        const pago = await actions.pagarContraEntrega(pedido.pedido_id);
+
+        if (!pago) {
+            throw new Error("No se pudo crear el pago");
+        }
+
+        await actions.vaciarCarrito();
+
+        swal(
+            "Pedido creado",
+            "Pagarás al recibir tu pedido. Recibirás el tracking por WhatsApp.",
+            "success"
+        );
+
+        navigate("/HistorialPedidos");
+
+    } catch (error) {
+
+        console.log(error);
+        swal("Error", "No se pudo procesar el pedido", "error");
+
+    }
+
+};
 
     return (
 
@@ -118,9 +109,9 @@ export const MetodoPago = () => {
 
             <button
                 className="btn btn-success"
-                onClick={pagarTarjeta}
+                onClick={pagarAlEntregar}
             >
-                Pagar con Tarjeta
+                Pagar al Recbir
             </button>
 
         </div>

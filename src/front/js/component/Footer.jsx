@@ -112,11 +112,11 @@ const Footer = () => {
                     <div className="flex flex-col md:flex-row items-center justify-between text-sm text-gray-200 gap-3 text-center md:text-left">
 
                         <span>
-                            © {new Date().getFullYear()} Fuente de Salud Bethel — Todos los derechos reservados
+                            © {new Date().getFullYear()} Fuente de Salud Bethel — Todos los derechos reservados -
                         </span>
 
                         <span>
-                            Pagos 100% seguros
+                            - Creado por Jonathan Meraz
                         </span>
 
                     </div>

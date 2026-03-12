@@ -34,7 +34,7 @@ const ListarProductos = () => {
 
         } catch (error) {
 
-            swal("Error debe Loguearse", error.message || "No se pudo agregar", "error");
+            swal("Error", error.message || "No se pudo agregar", "error");
 
         }
 
@@ -211,9 +211,23 @@ const ListarProductos = () => {
 
                                         <p><strong>Descripción:</strong> {producto.descripcion}</p>
 
-                                        <p><strong>Precio:</strong> {producto.precio}</p>
-
-                                        <p><strong>Disponibles:</strong> {producto.cantidad}</p>
+                                        <p><strong>Precio: </strong>Lps. {producto.precio}</p>
+                                        <p>
+                                            <strong>Disponibles:</strong>{" "}
+                                            {
+                                                producto.cantidad === 0
+                                                    ? <span style={{ color: "red", fontWeight: "bold" }}>Sin Stock</span>
+                                                    : producto.cantidad
+                                            }
+                                        </p>
+                                        <p>
+                                            <strong>Categoria:</strong>{" "}
+                                            {
+                                                store.categorias.find(
+                                                    cat => cat.categoria_id === producto.categoria_id
+                                                )?.nombre || "Sin categoria"
+                                            }
+                                        </p>
 
                                         <div className="d-flex align-items-center mb-3">
 
