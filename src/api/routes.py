@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, jsonify, Blueprint  
 import requests
-from api.models import db, User, Administrador, Product, Carrito, Post,Categoria, Pedido,PedidoItem,Pago
+from api.models import db, User, Administrador, Product, Carrito, Post,Categoria, Pedido,PedidoItem,Pago,PasswordReset
 from api.utils import APIException 
 from flask_cors import CORS 
 from flask_bcrypt import Bcrypt 
@@ -1578,7 +1578,8 @@ def pedidos_por_usuario(user_id):
             "usuario": {
                 "user_id": usuario.user_id,
                 "name": usuario.name,
-                "email": usuario.email
+                "email": usuario.email,   
+                "direccion": pedido.direccion
             },
 
             "items": [
@@ -1656,4 +1657,136 @@ def actualizar_comentario(pedido_id):
         "msg": "Comentario guardado",
         "pedido_id": pedido.pedido_id,
         "comentario": pedido.comentario
-    }), 200
+    }), 200 
+    
+
+#Olvidaste tu COntrasena 
+@api.route('/forgot-password', methods=['POST'])
+def forgot_password():
+
+    data = request.get_json()
+
+    email = data.get("email")
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({"error": "Correo no registrado"}), 404
+
+    # generar código seguro
+    codigo = PasswordReset.generar_codigo()
+
+    expiracion = datetime.utcnow() + timedelta(minutes=10)
+
+    reset = PasswordReset(
+        email=email,
+        codigo=codigo,
+        expiracion=expiracion
+    )
+
+    db.session.add(reset)
+    db.session.commit()
+
+    cuerpo = f"""
+Hola {user.name}
+
+Solicitaste recuperar tu contraseña.
+
+Código de recuperación:
+
+{codigo}
+
+Este código expira en 10 minutos.
+
+Si no solicitaste este cambio ignora este correo.
+"""
+
+    enviar_correo(
+        email,
+        "Recuperar contraseña",
+        cuerpo
+    )
+
+    return jsonify({"msg": "Código enviado al correo"}), 200 
+
+#Verifica si el codigo es valido 
+@api.route('/verify-reset-code', methods=['POST'])
+def verify_reset_code():
+
+    data = request.get_json()
+
+    email = data.get("email")
+    codigo = data.get("codigo")
+
+    registro = PasswordReset.query.filter_by(
+        email=email,
+        codigo=codigo
+    ).first()
+
+    if not registro:
+        return jsonify({"error": "Código inválido"}), 400
+
+    if registro.expiracion < datetime.utcnow():
+        return jsonify({"error": "Código expirado"}), 400
+
+    return jsonify({"msg": "Código válido"}), 200 
+
+
+
+#Reset Password
+@api.route('/reset-password', methods=['POST'])
+def reset_password():
+
+    data = request.get_json()
+
+    email = data.get("email")
+    codigo = data.get("codigo")
+    nueva_password = data.get("password")
+
+    registro = PasswordReset.query.filter_by(
+        email=email,
+        codigo=codigo
+    ).first()
+
+    if not registro:
+        return jsonify({"error": "Código inválido"}), 400
+
+    if registro.expiracion < datetime.utcnow():
+        return jsonify({"error": "Código expirado"}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    password_hash = bcrypt.generate_password_hash(nueva_password).decode("utf-8")
+
+    user.password = password_hash
+
+    db.session.delete(registro)
+
+    db.session.commit()
+
+    return jsonify({"msg": "Contraseña actualizada"}), 200 
+
+#CAMBIAR CONTRASENA 
+@api.route('/change-password', methods=['PUT'])
+@jwt_required()
+def change_password():
+
+    data = request.get_json()
+
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+
+    user_id = get_jwt_identity()
+
+    user = User.query.get(user_id)
+
+    # verificar contraseña actual
+    if not bcrypt.check_password_hash(user.password, current_password):
+        return jsonify({"error":"Contraseña actual incorrecta"}),400
+
+    # guardar nueva contraseña
+    user.password = bcrypt.generate_password_hash(new_password).decode("utf-8")
+
+    db.session.commit()
+
+    return jsonify({"msg":"Contraseña actualizada"})

@@ -33,7 +33,8 @@ const navbar = () => {
 
 
   useEffect(() => {
-    actions.getCategorias();
+    actions.getCategorias(); //carga categorias al iniciar app 
+    actions.verCarrito(); // carga carrito al iniciar la app evita que al dar resfresh se eliminene RECORDAR
   }, []);
 
 
@@ -129,10 +130,26 @@ const navbar = () => {
                     {store.carrito.length === 0 ? (
                       <span className="dropdown-item">Carrito vacío</span>
                     ) : (
-                      store.carrito.map((item, index) => (
-                        <span className="dropdown-item" key={index}>
-                          {item.producto.name} - Lps. {item.producto.precio}
-                        </span>
+                      store.carrito.map((item,index) => (
+                        <div
+                              key={item.carrito_id}
+                          className="dropdown-item d-flex justify-content-between align-items-center"
+                        >
+
+                          <span>
+                            {item.producto.name} (x{item.cantidad}) - Lps. {item.producto.precio}
+                          </span>
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={(e) => {
+                              e.stopPropagation(); // evita que el dropdown se cierre
+                              actions.eliminarProductoCarrito(item.carrito_id);
+                            }}
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+
+                        </div>
                       ))
                     )}
                     <div className="dropdown-divider"></div>

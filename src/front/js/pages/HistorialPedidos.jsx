@@ -233,7 +233,7 @@ export const HistorialPedidos = () => {
 
                                     <div className="total">
 
-                                        Total productos: Lps. {totalProductos}
+                                        Total a Pagar: Lps. {totalProductos}
 
                                     </div>
 

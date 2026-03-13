@@ -648,13 +648,13 @@ const getState = ({ getStore, getActions, setStore }) => {
                         console.error("Error al Eliminar Producto del Carrito:", errorData);
                         throw new Error(errorData.error || 'error al Elinar el usuario')
                     }
-                    console.log("Producto en Carrito no Encontrado:", carritoId)
+                    console.log("Producto en Carrito Encontrado:", carritoId)
                     const store = getStore()
                     console.log("Store antes de eliminar el prodcuto del carrito", store)
                     if (Array.isArray(store.carrito)) {
                         setStore({
                             ...store,
-                            carrito: store.carrito.filter(carrito => carrito.id !== carritoId),
+                            carrito: store.carrito.filter(carrito => carrito.carrito_id !== carritoId),
                             message: 'Producto del Carrito eliminado'
                         })
                     }
@@ -789,6 +789,10 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.error("❌ Error al vaciar el carrito:", error.message);
                 }
             },
+
+
+
+
             getUsuario: async () => {
                 try {
                     const token = getStore().token;
@@ -1605,7 +1609,140 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
 
             },
+            // Solicitar código de recuperación Olvidaste COntrasena
+            forgotPassword: async (email) => {
+                try {
 
+                    const response = await fetch(`${baseUrl}api/forgot-password`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ email })
+                    })
+
+                    const data = await response.json()
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error enviando correo")
+                    }
+
+                    swal("Código enviado", "Revisa tu correo electrónico", "success")
+
+                    return true
+
+                } catch (error) {
+
+                    console.error("Error forgot password:", error)
+
+                    swal("Error", error.message, "error")
+
+                    return false
+                }
+            },
+            // Verificar código de recuperación
+            verifyResetCode: async (email, codigo) => {
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/verify-reset-code`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            email,
+                            codigo
+                        })
+                    })
+
+                    const data = await response.json()
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Código inválido")
+                    }
+
+                    return true
+
+                } catch (error) {
+
+                    swal("Error", error.message, "error")
+
+                    return false
+                }
+            },
+
+            // Cambiar contraseña
+            resetPassword: async (email, codigo, password) => {
+
+                try {
+
+                    const response = await fetch(`${baseUrl}api/reset-password`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            email,
+                            codigo,
+                            password
+                        })
+                    })
+
+                    const data = await response.json()
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error al cambiar contraseña")
+                    }
+
+                    swal("Contraseña actualizada", "Ahora puedes iniciar sesión", "success")
+
+                    return true
+
+                } catch (error) {
+
+                    swal("Error", error.message, "error")
+
+                    return false
+                }
+            },
+
+            //cambiar contrasena ESTA ES LA RUTA OFICIAL
+            changePassword: async (current_password, new_password) => {
+
+                try {
+
+                    const token = localStorage.getItem("token")
+
+                    const response = await fetch(`${baseUrl}api/change-password`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            current_password,
+                            new_password
+                        })
+                    })
+
+                    const data = await response.json()
+
+                    if (!response.ok) {
+                        throw new Error(data.error || "Error cambiando contraseña")
+                    }
+
+                    swal("Contraseña actualizada", "", "success")
+
+                    return true
+
+                } catch (error) {
+
+                    swal("Error", error.message, "error")
+
+                    return false
+                }
+            },
 
         }
     }

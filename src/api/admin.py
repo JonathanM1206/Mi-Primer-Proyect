@@ -1,7 +1,7 @@
 import os
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from .models import db, Administrador, User, Product, Carrito, Categoria, Post, Pedido, PedidoItem, Pago
+from .models import db, Administrador, User, Product, Carrito, Categoria, Post, Pedido, PedidoItem, Pago,PasswordReset
 
 def setup_admin(app):
     # Secret key y tema para Flask-Admin
@@ -20,4 +20,5 @@ def setup_admin(app):
     admin_panel.add_view(ModelView(Post, db.session, name='Posts'))
     admin_panel.add_view(ModelView(Pedido, db.session, name='Pedidos'))
     admin_panel.add_view(ModelView(PedidoItem, db.session, name='Items de Pedido'))
-    admin_panel.add_view(ModelView(Pago, db.session, name='Pagos'))
+    admin_panel.add_view(ModelView(Pago, db.session, name='Pagos')) 
+    admin_panel.add_view(ModelView(PasswordReset, db.session, name='Reset Password'))

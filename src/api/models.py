@@ -1,7 +1,9 @@
 
 from flask_sqlalchemy import SQLAlchemy 
 from datetime import datetime 
-import pytz #Importar para hora Honduras
+import pytz #Importar para hora Honduras 
+import secrets
+
 
 db=SQLAlchemy()   
 
@@ -194,4 +196,21 @@ class Pago(db.Model):
     metodo = db.Column(db.String(50))  # pixelpay, tarjeta, efectivo, etc
     estado = db.Column(db.String(50), default='pendiente')  # pendiente, completado, fallido
     referencia = db.Column(db.String(200))  # ID de la transacción externa
-    fecha = db.Column(db.DateTime, default=hora_honduras)
+    fecha = db.Column(db.DateTime, default=hora_honduras) 
+    
+    
+class PasswordReset(db.Model):
+    __tablename__ = "password_reset"
+
+    id = db.Column(db.Integer, primary_key=True)  # id del registro
+
+    email = db.Column(db.String(100), nullable=False)  # correo del usuario
+
+    codigo = db.Column(db.String(6), nullable=False)  # código seguro de 6 dígitos
+
+    expiracion = db.Column(db.DateTime, nullable=False)  # tiempo límite del código
+
+    # función para generar código seguro
+    @staticmethod
+    def generar_codigo():
+        return str(secrets.randbelow(900000) + 100000)

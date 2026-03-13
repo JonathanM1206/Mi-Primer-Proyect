@@ -63,11 +63,11 @@ const EditUsuario = () => {
     }
 
 
-      const handleLogout = () => {
-    actions.logout();
-    navigate("/");
+    const handleLogout = () => {
+        actions.logout();
+        navigate("/");
 
-  }
+    }
     useEffect(() => {
         if (store.user) {
             setUserData({
@@ -86,9 +86,9 @@ const EditUsuario = () => {
 
 
     console.log("store.user:", store.user);
-  const userStorage = JSON.parse(localStorage.getItem("user"));
-console.log("localStorage telefono:", userStorage?.telefono);
-console.log("localStorage direccion:", userStorage?.direccion);
+    const userStorage = JSON.parse(localStorage.getItem("user"));
+    console.log("localStorage telefono:", userStorage?.telefono);
+    console.log("localStorage direccion:", userStorage?.direccion);
     console.log("localStorage user:", localStorage.getItem("user"));
 
     return (
@@ -97,15 +97,15 @@ console.log("localStorage direccion:", userStorage?.direccion);
             <div className='     Perfil   ' >
                 <h1>Mi Perfil</h1>
                 <p>
-                    <strong>User:</strong>
+                    <strong>User: </strong>
                     {isEditing ? <input type='name' name='name' value={userData.name} onChange={handleChange} /> : name}
                 </p>
                 <p>
-                    <strong>Email:</strong>
+                    <strong>Email: </strong>
                     {isEditing ? <input type='email' name='email' value={userData.email} onChange={handleChange} /> : email}
                 </p>
                 <p>
-                    <strong>Telefono:</strong>
+                    <strong>Telefono: </strong>
                     {isEditing ? <input type='number' name='telefono' value={userData.telefono} onChange={handleChange} /> : telefono}
                 </p>
                 <p>
@@ -135,8 +135,14 @@ console.log("localStorage direccion:", userStorage?.direccion);
                 )}
                 {(role === 'user' || role === 'admin') && (
                     <>
-                        <button className='btn btn-danger' onClick={eliminarMe}>Eliminar Cuenta</button> 
-                        <button  className='btn btn-warning' onClick={() => handleLogout()}>Logout</button>
+                        <button className='btn btn-danger' onClick={eliminarMe}>Eliminar Cuenta</button>
+                        <button className='btn btn-warning' onClick={() => handleLogout()}>Logout</button>
+                        <button
+                            className='btn btn-success'
+                            onClick={() => navigate("/cambiarContrasena")}
+                        >
+                            Cambiar Contrasena
+                        </button>
                     </>
                 )}
 
