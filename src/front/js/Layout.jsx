@@ -30,7 +30,8 @@ import BuscarClientes from "./pages/BuscarClientes.jsx"
 import HistorialCliente from "./pages/HistorialCliente.jsx";
 import AdminPedidos from "./pages/AdminPedidos"
 import RecuperarContrasena from './pages/RecuperarContrasena.jsx';
-import CambiarContrasena from './pages/CambiarContrasena.jsx';
+import CambiarContrasena from './pages/CambiarContrasena.jsx'; 
+import ReporteVentas from './pages/ReporteVentas.jsx';
 const Layout = () => {
   const { store, actions } = useContext(Context);
 
@@ -68,7 +69,8 @@ const Layout = () => {
         <Route path="/editAdmin" element={<EditAdmin />} />
         <Route path="/crearProducto" element={<CrearProducto />} />
         <Route path="/listarUsuarios" element={<ListaUsuario />} />
-        <Route path="/admin/pedidos" element={<AdminPedidos />} />
+        <Route path="/admin/pedidos" element={<AdminPedidos />} /> 
+        <Route path='/ReporteVentas' element={<ReporteVentas/>}/>
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />

@@ -1558,7 +1558,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
 
-            //Guardar Comentarios en cada pedido
+
             //Guardar Comentarios en cada pedido
             actualizarComentarioPedido: async (pedido_id, comentario) => {
 
@@ -1742,6 +1742,36 @@ const getState = ({ getStore, getActions, setStore }) => {
 
                     return false
                 }
+            },
+            //Reporte de ventas totales: 
+            reporteCompleto: async (inicio, fin) => {
+
+                const token = getStore().token;
+
+                // DETALLE
+                const res1 = await fetch(
+                    `${baseUrl}/api/reporte/productos-por-usuario?inicio=${inicio}&fin=${fin}`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+
+                const detalle = await res1.json();
+
+                // RESUMEN
+                const res2 = await fetch(
+                    `${baseUrl}/api/reporte/resumen?inicio=${inicio}&fin=${fin}`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+
+                const resumen = await res2.json();
+
+                setStore({
+                    reporteDetalle: detalle,
+                    reporteResumen: resumen
+                });
             },
 
         }

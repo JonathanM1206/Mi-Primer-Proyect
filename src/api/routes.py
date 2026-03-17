@@ -8,7 +8,8 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt, verify_jwt_in_request  
 from datetime import timedelta,datetime  
 from werkzeug.utils import secure_filename
-import uuid  # para generar guest_id únicos 
+import uuid  # para generar guest_id únicos  
+from sqlalchemy import or_ ,func
 
 #Enviar Mails: 
 from flask_mail import Message
@@ -1605,11 +1606,105 @@ def pedidos_por_usuario(user_id):
 
     return jsonify(resultado), 200
 
+#Hsitorial de Productos mas vendidos 
+
+@api.route('/reporte/productos-por-usuario', methods=['GET'])
+@jwt_required()
+def reporte_productos_por_usuario():
+
+    # Obtener fechas
+    fecha_inicio = request.args.get("inicio")
+    fecha_fin = request.args.get("fin")
+
+    # Validar que vengan ambas fechas
+    if not fecha_inicio or not fecha_fin:
+        return jsonify({"msg": "Debes enviar fecha inicio y fecha fin"}), 400
+
+    # Convertir fechas
+    inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+    fin = datetime.strptime(fecha_fin, "%Y-%m-%d") + timedelta(days=1)
+
+    # Query principal
+    resultados = db.session.query(
+        User.name.label("usuario"),  # nombre del usuario
+        Product.name.label("producto"),  # nombre del producto
+        PedidoItem.precio_unitario.label("precio_unitario"),  # precio al que se vendió
+        func.sum(PedidoItem.cantidad).label("cantidad_total"),  # cantidad total vendida
+        func.sum(
+            PedidoItem.cantidad * PedidoItem.precio_unitario
+        ).label("total_generado")  # total generado
+    ).join(
+        Pedido, Pedido.user_id == User.user_id
+    ).join(
+        PedidoItem, PedidoItem.pedido_id == Pedido.pedido_id
+    ).join(
+        Product, Product.product_id == PedidoItem.product_id
+    ).filter(
+        Pedido.fecha >= inicio,
+        Pedido.fecha < fin
+    ).group_by(
+        User.user_id,
+        Product.product_id,
+        PedidoItem.precio_unitario
+    ).order_by(
+        func.sum(PedidoItem.cantidad).desc()
+    ).all()
+
+    # Convertir a JSON
+    data = []
+
+    for r in resultados:
+        data.append({
+            "usuario": r.usuario,
+            "producto": r.producto,
+            "precio_unitario": float(r.precio_unitario),
+            "cantidad": int(r.cantidad_total),
+            "total": float(r.total_generado)
+        })
+
+    return jsonify(data), 200
+
+#Reporte de Ventas Totales para Admin 
+@api.route('/reporte/resumen', methods=['GET'])
+@jwt_required()
+def resumen_reporte():
+
+    # Obtener fechas
+    fecha_inicio = request.args.get("inicio")
+    fecha_fin = request.args.get("fin")
+
+    # Convertir fechas
+    inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+    fin = datetime.strptime(fecha_fin, "%Y-%m-%d") + timedelta(days=1)
+
+    # Query resumen
+    resultado = db.session.query(
+
+        func.sum(Pedido.total).label("total_vendido"),  # suma total pedidos
+
+        func.sum(PedidoItem.cantidad).label("total_productos"),  # total productos vendidos
+
+        func.sum(
+            PedidoItem.cantidad * PedidoItem.precio_unitario
+        ).label("total_generado")  # dinero generado
+
+    ).join(
+        PedidoItem, PedidoItem.pedido_id == Pedido.pedido_id
+    ).filter(
+        Pedido.fecha >= inicio,
+        Pedido.fecha < fin
+    ).first()
+
+    return jsonify({
+        "total_vendido": float(resultado.total_vendido or 0),
+        "total_productos": int(resultado.total_productos or 0),
+        "total_generado": float(resultado.total_generado or 0)
+    }), 200
 
 #Buscar Productos 
 @api.route('/buscar/productos')  
 def buscar_productos():  
-    query=request.args.get('query','') #Capurtra lo que escriviste en el input 
+    query=request.args.get('query','').strip() #Capurtra lo que escriviste en el input 
     if not query: 
         return jsonify([]) #si no hay nada, devuelve lista vacia 
     
@@ -1617,23 +1712,40 @@ def buscar_productos():
 
     return jsonify([p.serialize()for p in product]) #Devuelve JSON para los productos 
 
-#Buscar Clientes 
-@api.route('/buscar/clientes')  
-@jwt_required()
-def buscar_clientes():  
 
+#Buscar Clientes 
+@api.route('/buscar/clientes')
+@jwt_required()
+def buscar_clientes():
+
+    # Obtener el id del administrador desde el JWT
     admin_id = get_jwt_identity()
+
+    # Buscar el administrador en la base de datos
     admin = Administrador.query.get(admin_id)
 
+    # Verificar que sea administrador
     if not admin or admin.role != "admin":
         return jsonify({"msg": "Acceso denegado"}), 403
 
-    query=request.args.get('query','') 
-    if not query: 
-        return jsonify([])#Sino hay nada devuelve lista vacia 
-    
-    clientes=User.query.filter(User.name.ilike(f'%{query}%')).all()#Buscar Coincidencias 
-    return jsonify([c.serialize() for c in clientes ])#Devuelve JSON para los clientes 
+    # Obtener texto de búsqueda y eliminar espacios innecesarios
+    query = request.args.get('query', '').strip()
+
+    # Si después de quitar espacios queda vacío, devolver lista vacía
+    if not query:
+        return jsonify([])
+
+    # Buscar coincidencias en nombre, correo o teléfono
+    clientes = User.query.filter(
+        or_(
+            User.name.ilike(f'%{query}%'),      # Buscar por nombre
+            User.email.ilike(f'%{query}%'),     # Buscar por correo
+            User.telefono.ilike(f'%{query}%')   # Buscar por teléfono
+        )
+    ).all()
+
+    # Convertir resultados a JSON
+    return jsonify([c.serialize() for c in clientes])
  
  
 #Ruta para guardar comentarios en los pedidos: 

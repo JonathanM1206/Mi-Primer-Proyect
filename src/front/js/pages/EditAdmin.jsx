@@ -136,6 +136,12 @@ const EditAdmin = () => {
                         onClick={() => navigate("/admin/pedidos")}
                     >
                         Panel de Pedidos
+                    </button> 
+                        <button
+                        className="btn btn-success"
+                        onClick={() => navigate("/ReporteVentas")}
+                    >
+                        Reporte Ventas
                     </button>
                     <button style={extraButton} onClick={() => handleLogout()}>Logout</button>
                 </div>
