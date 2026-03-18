@@ -46,7 +46,7 @@ const Navbar = () => {
         {`
         .custom-navbar {
           background: #247456;
-          border-radius: 20px;
+          
           margin: 3px;
           box-shadow:none;
         }
@@ -267,10 +267,11 @@ const Navbar = () => {
                 />
               )}
 
-            </div>
-
-            {/* CARRITO */}
-            <div className="ms-lg-3 mt-2 mt-lg-0">
+            </div> 
+               {/* CARRITO */}
+              {role !== "admin" && (  
+                 
+                 <div className="ms-lg-3 mt-2 mt-lg-0">
 
               <div className="dropdown">
                 <button
@@ -294,7 +295,8 @@ const Navbar = () => {
 
                         <button
                           className="btn btn-sm btn-danger"
-                          onClick={() => actions.eliminarProductoCarrito(item.carrito_id)}
+                          onClick={(e) =>{e.stopPropagation(); // 🔥 evita que se cierre el dropdown 
+                          actions.eliminarProductoCarrito(item.carrito_id)}}
                         >
                           <i className="fas fa-trash"></i>
                         </button>
@@ -313,6 +315,9 @@ const Navbar = () => {
               </div>
 
             </div>
+              )}
+        
+           
 
           </div>
         </div>
