@@ -1,234 +1,257 @@
-import React, { useState, useEffect, useContext } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { Context } from '../store/appContext.jsx'
-import swal from 'sweetalert'
+import React, { useState, useEffect, useContext } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Context } from '../store/appContext.jsx';
+import swal from 'sweetalert';
 
 const DetalleProducto = () => {
-  const { store, actions } = useContext(Context);
-  const { id } = useParams();
-  const [producto, setProducto] = useState(null);
-  const [cantidad, setCantidad] = useState(1);
-  const [editando, setEditando] = useState(false);
-  const [productoEditado, setProductoEditado] = useState({});
-  const [nuevaImagen, setNuevaImagen] = useState(null);
+    const { store, actions } = useContext(Context);
+    const { id } = useParams();
+    const navigate = useNavigate();
+    
+    const [producto, setProducto] = useState(null);
+    const [cantidad, setCantidad] = useState(1);
+    const [editando, setEditando] = useState(false);
+    const [productoEditado, setProductoEditado] = useState({});
+    const [nuevasImagenes, setNuevasImagenes] = useState(null); // Para subir múltiples
+    const [imagenActiva, setImagenActiva] = useState(null);
 
-  // Detectar el rol
-  let admin = localStorage.getItem('role');
-  let user = JSON.parse(localStorage.getItem('user'))?.role;
-  let role = admin || user;
+    // Determinar rol de forma segura
+    const role = store.role || localStorage.getItem('role');
+    const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev';
 
-  const fetchProducto = async () => {
-    try {
-      const data = await actions.getProductoPorId(id);
-      if (!data) throw new Error("Producto no encontrado");
-      setProducto(data);
-    } catch (error) {
-      console.error("Error al obtener el producto:", error);
-    }
-  };
+    const fetchProducto = async () => {
+        try {
+            const data = await actions.getProductoPorId(id);
+            if (!data) throw new Error("Producto no encontrado");
+            setProducto(data);
+            if (data.imagenes && data.imagenes.length > 0) {
+                setImagenActiva(data.imagenes[0].url);
+            }
+        } catch (error) {
+            console.error("Error al obtener el producto:", error);
+        }
+    };
 
-  useEffect(() => {
-    fetchProducto();
-  }, [id]);
+    useEffect(() => {
+        fetchProducto();
+    }, [id]);
 
-  // Agregar al carrito
-  const handleCantidadChange = (e) => {
-    const nuevaCantidad = parseInt(e.target.value) || 1;
-    setCantidad(nuevaCantidad);
-  };
+    // Manejo de Carrito
+    const agregarCarrito = async () => {
+        try {
+            await actions.agregarProductoCarrito(producto.product_id, cantidad);
+            swal("¡Añadido!", `${producto.name} se agregó al carrito.`, "success");
+        } catch (error) {
+            swal("Error", "Debes iniciar sesión para comprar", "error");
+        }
+    };
 
-  const agregarCarrito = async () => {
-    try {
-      await actions.agregarProductoCarrito(producto.product_id, cantidad);
-      swal("Producto agregado", "Se ha agregado al carrito", "success");
-    } catch (error) {
-      swal("Error", "Debe iniciar sesión para agregar productos", "error");
-    }
-  };
+    // Edición de Producto
+    const iniciarEdicion = () => {
+        setProductoEditado({ ...producto });
+        setEditando(true);
+    };
 
-  // Eliminar producto (solo admin)
-  const eliminarProducto = async () => {
-    const confirmar = await swal({
-      title: "¿Estás seguro?",
-      text: "¡No podrás deshacer esta acción!",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-    });
+    const handleFileChange = (e) => {
+        setNuevasImagenes(e.target.files); // Captura el FileList
+    };
 
-    if (confirmar) {
-      try {
-        await actions.eliminarProducto(producto.product_id);
-        swal("Producto eliminado", "El producto ha sido eliminado correctamente", "success");
-      } catch (error) {
-        swal("Error", "No se pudo eliminar el producto", "error");
-      }
-    }
-  };
+    const guardarCambios = async () => {
+        try {
+            // 1. Actualizar datos básicos
+            await actions.editarProducto(productoEditado, producto.product_id);
+            
+            // 2. Si hay nuevas imágenes, subirlas usando la acción que proporcionaste
+            if (nuevasImagenes && nuevasImagenes.length > 0) {
+                await actions.agregarImagenesProducto(producto.product_id, nuevasImagenes);
+            }
 
-  // Editar producto
-  const iniciarEdicion = () => {
-    setProductoEditado({ ...producto });
-    setEditando(true);
-  };
+            swal("Actualizado", "El producto ha sido modificado con éxito", "success");
+            setEditando(false);
+            setNuevasImagenes(null);
+            fetchProducto(); 
+        } catch (error) {
+            swal("Error", "No se pudieron guardar los cambios", "error");
+        }
+    };
 
-  const handleChange = (e) => {
-    setProductoEditado({
-      ...productoEditado,
-      [e.target.name]: e.target.value,
-    });
-  };
+    const eliminarProducto = async () => {
+        const confirmar = await swal({
+            title: "¿Eliminar producto?",
+            text: "Esta acción no se puede deshacer",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        });
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    setNuevaImagen(file);
-  };
+        if (confirmar) {
+            const success = await actions.eliminarProducto(producto.product_id);
+            if (success) {
+                swal("Eliminado", "Producto borrado", "success");
+                navigate("/ListarProductos");
+            }
+        }
+    };
 
-  const guardarCambios = async () => {
-    try {
-      await actions.editarProducto(productoEditado, producto.product_id, nuevaImagen);
-      swal("Éxito", "El producto ha sido actualizado correctamente", "success");
-      setEditando(false);
-      setNuevaImagen(null);
-      fetchProducto(); // recargar datos actualizados
-    } catch (error) {
-      console.error("Error al editar:", error);
-      swal("Error", "No se pudo editar el producto", "error");
-    }
-  };
+    if (!producto) return <div className="text-center mt-5">Cargando...</div>;
 
-  if (!producto) {
-    return <div className="text-center mt-5">Cargando producto...</div>;
-  }
+    return (
+        <>
+            <style>
+                {`
+                .zoom-container {
+                    overflow: hidden;
+                    border-radius: 15px;
+                    background: #f8f9fa;
+                    cursor: crosshair;
+                    position: relative;
+                    height: 400px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
 
-  return (
-    <div className="container mt-5">
-      <div className="card mx-auto shadow" style={{ maxWidth: "600px" }}>
-        <img
-          src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev${producto.imagen}`}
-          alt={producto.name}
-          className="card-img-top"
-          style={{ height: '300px', objectFit: 'cover' }}
-        />
-        <div className="card-body">
-          <h3 className="card-title text-center mb-3">Detalle del Producto</h3>
+                .zoom-image {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    transition: transform 0.4s ease-in-out;
+                }
 
-          {/* Si está editando */}
-          {editando ? (
-            <>
-              <input
-                type="text"
-                name="name"
-                value={productoEditado.name}
-                onChange={handleChange}
-                className="form-control mb-2"
-                placeholder="Nombre del producto"
-              />
+                .zoom-container:hover .zoom-image {
+                    transform: scale(1.8); /* Ajusta el nivel de zoom aquí */
+                }
 
-              <textarea
-                name="descripcion"
-                value={productoEditado.descripcion}
-                onChange={handleChange}
-                className="form-control mb-2"
-                placeholder="Descripción"
-              ></textarea>
+                .mini-img {
+                    width: 70px;
+                    height: 70px;
+                    object-fit: cover;
+                    border: 2px solid transparent;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: 0.3s;
+                }
 
-              <input
-                type="number"
-                name="precio"
-                value={productoEditado.precio}
-                onChange={handleChange}
-                className="form-control mb-2"
-                placeholder="Precio"
-              />
+                .mini-img.active {
+                    border-color: #00bfff;
+                }
 
-              <input
-                type="number"
-                name="cantidad"
-                value={productoEditado.cantidad}
-                onChange={handleChange}
-                className="form-control mb-3"
-                placeholder="Cantidad"
-              />
+                .mini-img:hover {
+                    opacity: 0.8;
+                    transform: translateY(-3px);
+                }
+                `}
+            </style>
 
-              {/* Imagen nueva (opcional) */}
-              <div className="mb-3">
-                <label className="form-label">
-                  <small>Cambiar imagen (opcional):</small>
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="form-control"
-                />
-                {nuevaImagen && (
-                  <small className="text-success">
-                    Imagen seleccionada: {nuevaImagen.name}
-                  </small>
-                )}
-              </div>
+            <div className="container mt-5 mb-5">
+                <div className="row justify-content-center">
+                    <div className="col-md-10 bg-white p-4 shadow-sm rounded">
+                        <div className="row">
+                            {/* SECCIÓN IMÁGENES */}
+                            <div className="col-md-6">
+                                <div className="zoom-container shadow-sm border">
+                                    <img
+                                        src={`${baseUrl}${imagenActiva}`}
+                                        alt={producto.name}
+                                        className="zoom-image"
+                                    />
+                                </div>
+                                
+                                <div className="d-flex mt-3 gap-2 flex-wrap">
+                                    {producto.imagenes?.map((img, index) => (
+                                        <img
+                                            key={index}
+                                            src={`${baseUrl}${img.url}`}
+                                            className={`mini-img ${imagenActiva === img.url ? 'active' : ''}`}
+                                            onClick={() => setImagenActiva(img.url)}
+                                            alt="miniatura"
+                                        />
+                                    ))}
+                                </div>
+                            </div>
 
-              <button className="btn btn-success me-2" onClick={guardarCambios}>
-                Guardar cambios
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setEditando(false)}
-              >
-                Cancelar
-              </button>
-            </>
-          ) : (
-            <>
-              <p><strong>Nombre:</strong> {producto.name}</p>
-              <p><strong>Descripción:</strong> {producto.descripcion}</p>
-              <p><strong>Precio:</strong> Lps. {producto.precio}</p>
-              <p><strong>Stock:</strong> {producto.cantidad}</p>
+                            {/* SECCIÓN DETALLES */}
+                            <div className="col-md-6">
+                                {editando ? (
+                                    <div className="p-3 border rounded">
+                                        <h4 className="mb-3">Editar Detalles</h4>
+                                        <input
+                                            type="text"
+                                            className="form-control mb-2"
+                                            value={productoEditado.name}
+                                            onChange={(e) => setProductoEditado({...productoEditado, name: e.target.value})}
+                                            placeholder="Nombre"
+                                        />
+                                        <textarea
+                                            className="form-control mb-2"
+                                            rows="3"
+                                            value={productoEditado.descripcion}
+                                            onChange={(e) => setProductoEditado({...productoEditado, descripcion: e.target.value})}
+                                            placeholder="Descripción"
+                                        />
+                                        <div className="row mb-2">
+                                            <div className="col">
+                                                <input type="number" className="form-control" value={productoEditado.precio} onChange={(e) => setProductoEditado({...productoEditado, precio: e.target.value})} placeholder="Precio" />
+                                            </div>
+                                            <div className="col">
+                                                <input type="number" className="form-control" value={productoEditado.cantidad} onChange={(e) => setProductoEditado({...productoEditado, cantidad: e.target.value})} placeholder="Stock" />
+                                            </div>
+                                        </div>
+                                        
+                                        <label className="form-label mt-2 small">Añadir más imágenes:</label>
+                                        <input type="file" multiple className="form-control mb-3" onChange={handleFileChange} />
+                                        
+                                        <div className="d-flex gap-2">
+                                            <button className="btn btn-success w-100" onClick={guardarCambios}>Guardar</button>
+                                            <button className="btn btn-light w-100" onClick={() => setEditando(false)}>Cancelar</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="ps-md-4">
+                                        <h2 className="display-6 fw-bold">{producto.name}</h2>
+                                        <h3 className="text-primary my-3">Lps. {parseFloat(producto.precio).toLocaleString()}</h3>
+                                        <p className="text-muted">{producto.descripcion}</p>
+                                        <p><strong>Disponibles:</strong> {producto.cantidad} unidades</p>
+                                        
+                                        <div className="d-flex align-items-center gap-3 mt-4">
+                                            <input
+                                                type="number"
+                                                className="form-control text-center"
+                                                style={{ width: "80px" }}
+                                                value={cantidad}
+                                                min="1"
+                                                max={producto.cantidad}
+                                                onChange={(e) => setCantidad(parseInt(e.target.value))}
+                                            />
+                                            <button className="btn btn-info text-white px-4 py-2" onClick={agregarCarrito}>
+                                                <i className="fas fa-cart-plus me-2"></i>Añadir al Carrito
+                                            </button>
+                                        </div>
 
-              {/* Agregar al carrito */}
-              <div className="d-flex align-items-center mb-3">
-                <input
-                  type="number"
-                  min="1"
-                  value={cantidad}
-                  onChange={handleCantidadChange}
-                  className="form-control me-2"
-                  style={{ width: "100px" }}
-                />
-                <button
-                  className="btn text-white"
-                  style={{ background: "#00bfff" }}
-                  onClick={agregarCarrito}
-                >
-                  Agregar al Carrito
-                </button>
-              </div>
-
-              {/* Botones solo para admin */}
-              {role === 'admin' && (
-                <div className="d-flex flex-column gap-2 mt-3">
-                  <button className="btn btn-primary" onClick={iniciarEdicion}>
-                    Editar Producto
-                  </button>
-                  <button className="btn btn-danger" onClick={eliminarProducto}>
-                    Eliminar Producto
-                  </button>
+                                        {role === 'admin' && (
+                                            <div className="mt-5 pt-4 border-top">
+                                                <h6>Panel de Administrador</h6>
+                                                <div className="d-flex gap-2">
+                                                    <button className="btn btn-outline-dark btn-sm" onClick={iniciarEdicion}>Editar Producto</button>
+                                                    <button className="btn btn-outline-danger btn-sm" onClick={eliminarProducto}>Eliminar</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="text-center mt-5">
+                            <Link to="/ListarProductos" className="text-decoration-none text-secondary">
+                                <i className="fas fa-arrow-left me-2"></i>Volver a la tienda
+                            </Link>
+                        </div>
+                    </div>
                 </div>
-              )}
-            </>
-          )}
-
-          {/* Botón volver */}
-          <div className="mt-4 text-center">
-            <Link to="/ListarProductos" className="btn btn-secondary">
-              Volver a la lista
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+            </div>
+        </>
+    );
 };
 
 export default DetalleProducto;

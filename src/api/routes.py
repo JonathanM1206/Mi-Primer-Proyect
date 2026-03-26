@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, jsonify, Blueprint  
 import requests
-from api.models import db, User, Administrador, Product, Carrito, Post,Categoria, Pedido,PedidoItem,Pago,PasswordReset
+from api.models import db, User, Administrador, Product, Carrito, Post,Categoria, Pedido,PedidoItem,Pago,PasswordReset,ProductImage
 from api.utils import APIException 
 from flask_cors import CORS 
 from flask_bcrypt import Bcrypt 
@@ -561,62 +561,67 @@ def admin_delete_user(user_id):
     db.session.commit()
 
     return jsonify({'msg': 'Usuario eliminado exitosamente por el administrador.'}), 200
-#Agregar Producto 
-@api.route('/producto',methods=['POST']) 
-@jwt_required() #obliga a que el usuario esté logueado
-def crear_producto():  
-    admin_id = get_jwt_identity()  #  obtiene el ID del usuario desde el token
+#Crear o Agregar Producto 
+@api.route('/producto', methods=['POST'])
+@jwt_required()
+def crear_producto():
 
-    admin = Administrador.query.get(admin_id)  #  busca al usuario en la base de datos
-    if not admin or admin.role != "admin":  #  valida que sea admin
-        return jsonify({"msg": "Acceso denegado. Solo los administradores pueden crear productos."}), 403
+    # 🔐 Obtener ID del admin
+    admin_id = get_jwt_identity()
 
-    #Verificamos si hay imagen  
-    if 'imagen' not in request.files: 
-        return jsonify({'msg': 'No se ha proporcionado una imagen'}), 400 
-    
-    imagen = request.files['imagen']  #  obtenemos la imagen del request 
-    
-    if imagen.filename == '':  #  verificamos que la imagen tenga un nombre
-        return jsonify({'msg': 'No se ha proporcionado una imagen con nombre'}), 400 
-    
-    if not allowed_file(imagen.filename):  #  validamos el tipo de archivo
-        return jsonify({'msg': 'Tipo de archivo no permitido. Solo se permiten imágenes'}), 400 
-    
-    # Guardamos la imagen en el servidor    
-    filename = secure_filename(imagen.filename) 
-    print("Guardando imagen en:", os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    # 🔍 Buscar admin
+    admin = Administrador.query.get(admin_id)
 
-    imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    # 🚫 Validar rol
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
 
+    # ❌ Validar imagen
+    if 'imagen' not in request.files:
+        return jsonify({'msg': 'Debe enviar una imagen'}), 400
 
+    imagen = request.files['imagen']
 
-    data= request.form
+    if imagen.filename == '':
+        return jsonify({'msg': 'Imagen vacía'}), 400
+
+    # 🔥 ACEPTAR CUALQUIER FORMATO DE IMAGEN
+    # (sin bloquear extensiones)
+    filename = secure_filename(imagen.filename)
+
+    # 💾 Guardar imagen
+    ruta = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    imagen.save(ruta)
+
+    # 📥 Datos
+    data = request.form
+
     try:
-        precio = float(data['precio'])  #  convierte string a float
+        precio = float(data['precio'])
+        cantidad = int(data['cantidad'])
     except ValueError:
-        return jsonify({'msg': 'El precio debe ser un número (sin texto como "lps")'}), 400
+        return jsonify({'msg': 'Datos inválidos'}), 400
 
-    try:
-        cantidad = int(data['cantidad'])  #  también valida cantidad
-    except ValueError:
-        return jsonify({'msg': 'La cantidad debe ser un número entero'}), 400 
-    
-    categoria_id= data.get('categoria_id')  #  obtenemos la categoría del producto, si no se envía, será None
-    
-    nuevo_producto=Product( 
-        name=data['name'], 
-        descripcion=data['descripcion'], 
-        categoria_id=categoria_id,  #  asignamos la categoría, puede ser None
-        precio=precio, 
-        imagen=filename, 
-        cantidad=cantidad, 
+    categoria_id = data.get('categoria_id')
 
-    ) 
-    db.session.add(nuevo_producto) 
-    db.session.commit() 
+    # 🧱 Crear producto
+    nuevo_producto = Product(
+        name=data['name'],
+        descripcion=data['descripcion'],
+        categoria_id=categoria_id,
+        precio=precio,
+        cantidad=cantidad,
+        imagen=filename,  # 🔥 SOLO UNA IMAGEN
+        admin_id=admin_id
+    )
 
-    return jsonify({'msg':'Producto Creado Existosamente'}),201  
+    db.session.add(nuevo_producto)
+    db.session.commit()
+
+    return jsonify({
+        'msg': 'Producto creado correctamente',
+        'product_id': nuevo_producto.product_id
+    }), 201
 
 #Producto GET 
 @api.route('/producto',methods=['GET']) 
@@ -713,7 +718,49 @@ def edit_producto(product_id):
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e)}), 500 
+    
+
+#Lista de Imagenes 
+@api.route('/producto/<int:product_id>/imagenes', methods=['POST'])
+@jwt_required()
+def agregar_imagenes(product_id):
+
+    # 🔍 Buscar producto
+    producto = Product.query.get(product_id)
+
+    if not producto:
+        return jsonify({"msg": "Producto no encontrado"}), 404
+
+    # ❌ Validar que se enviaron archivos
+    if 'imagenes' not in request.files:
+        return jsonify({"msg": "No se enviaron imágenes"}), 400
+
+    imagenes = request.files.getlist("imagenes")
+
+    # 🔁 Recorrer imágenes
+    for img in imagenes:
+
+        if img.filename == '':
+            continue  # saltar vacíos
+
+        filename = secure_filename(img.filename)
+
+        # 💾 Guardar archivo
+        ruta = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        img.save(ruta)
+
+        # 🧱 Guardar en base de datos
+        nueva_img = ProductImage(
+            product_id=product_id,
+            url=filename
+        )
+
+        db.session.add(nueva_img)
+
+    db.session.commit()
+
+    return jsonify({"msg": "Imágenes agregadas correctamente"}), 201
 
 #DELETE Producto 
 @api.route('/delete_producto/<int:product_id>',methods=['DELETE']) 
@@ -804,7 +851,7 @@ def ver_carrito():
     resultado = [
         {
             "carrito_id": item.carrito_id,
-            "producto": item.product.serialize(),
+            "producto": item.product.serialize() if item.product else None,
             "cantidad": item.cantidad
         }
         for item in carrito

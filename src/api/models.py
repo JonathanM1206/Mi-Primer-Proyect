@@ -75,12 +75,13 @@ class Product (db.Model):
     cantidad=db.Column(db.Integer,nullable=False) 
     descripcion=db.Column(db.String(200),nullable=False) 
     admin_id = db.Column(db.Integer, db.ForeignKey('admin.admin_id'))
-    imagen = db.Column(db.String(255), nullable=True)
+    imagen = db.Column(db.String(255), nullable=True) 
     role=db.Column(db.String(100),nullable=False,default='product')
 
 
     #RelationShip
-      
+    imagenes = db.relationship('ProductImage', back_populates='product', lazy=True, cascade="all, delete-orphan")
+
     carritos = db.relationship('Carrito', back_populates='product', lazy=True)
     admin = db.relationship('Administrador', back_populates='products') 
     categoria_id = db.Column(db.Integer, db.ForeignKey('categoria.categoria_id'), nullable=True)
@@ -96,7 +97,9 @@ class Product (db.Model):
             "cantidad":self.cantidad, 
             "categoria_id":self.categoria_id, 
             "name":self.name, 
-            "imagen": f'/uploads/{self.imagen}' if self.imagen else None,
+            "imagen": f'/uploads/{self.imagen}' if self.imagen else None, 
+            "imagenes": [img.serialize() for img in self.imagenes],
+
             "descripcion":self.descripcion,
             "role":self.role
         } 
@@ -120,7 +123,7 @@ class Carrito (db.Model):
             "user_id":self.user_id, 
             "guest_id":self.guest_id,   
             "cantidad":self.cantidad, 
-            "product":self.product.serialize()
+            "product": self.product.serialize() if self.product else None
 
         } 
     
@@ -213,4 +216,27 @@ class PasswordReset(db.Model):
     # función para generar código seguro
     @staticmethod
     def generar_codigo():
-        return str(secrets.randbelow(900000) + 100000)
+        return str(secrets.randbelow(900000) + 100000) 
+    
+    
+class ProductImage(db.Model):
+    __tablename__ = 'product_image'
+
+    image_id = db.Column(db.Integer, primary_key=True)  # ID de la imagen
+
+    product_id = db.Column(
+    db.Integer,
+    db.ForeignKey('product.product_id', ondelete='CASCADE'),
+    nullable=False
+    )  # relación con producto
+
+    url = db.Column(db.String(255), nullable=False)  # ruta de la imagen
+
+    # relación inversa
+    product = db.relationship('Product', back_populates='imagenes')
+
+    def serialize(self):
+        return {
+            "image_id": self.image_id,
+            "url": f'/uploads/{self.url}'
+        }

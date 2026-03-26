@@ -290,7 +290,7 @@ const Navbar = () => {
                       <li key={item.carrito_id} className="dropdown-item d-flex justify-content-between">
 
                         <span>
-                          {item.producto.name} x{item.cantidad}
+                          {item.producto?.name} x{item.cantidad}
                         </span>
 
                         <button

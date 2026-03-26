@@ -98,14 +98,59 @@ const Carrito = () => {
     actions.verCarrito();
   }, []);
 
-  const productosCarrito = Array.isArray(store.carrito) ? store.carrito : [];
+  const productosCarrito = Array.isArray(store.carrito)
+    ? store.carrito.filter(item => item.producto) // 🔥 SOLO los que existen
+    : [];
+  return ( 
+    <> 
+    <style>
+{`
+/* CONTENEDOR TIPO CÁPSULA */
+.cantidad-pill {
+  display: flex;                 /* coloca elementos en fila */
+  align-items: center;           /* centra verticalmente */
+  background: #f5f5f5;           /* fondo gris suave */
+  border-radius: 50px;           /* forma redondeada tipo cápsula */
+  padding: 5px 10px;             /* espacio interno */
+  border: 1.5px solid black;     /* 🔥 borde negro */
+}
 
-  return (
+/* BOTONES + Y - */
+.pill-btn {
+  background: transparent;       /* sin fondo */
+  border: none;                  /* sin borde */
+  font-size: 20px;               /* tamaño del símbolo */
+  font-weight: bold;
+  padding: 5px 10px;             /* espacio clickeable */
+  cursor: pointer;               /* mano al pasar */
+  transition: 0.2s;              /* animación suave */
+}
+
+/* EFECTO HOVER */
+.pill-btn:hover {
+  background: rgba(0,0,0,0.1);   /* efecto gris al pasar */
+  border-radius: 50%;            /* forma circular */
+}
+
+/* NÚMERO DEL CENTRO */
+.pill-number {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 10px;                /* separación entre botones */
+}
+
+/* BOTÓN DESHABILITADO */
+.pill-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+`}
+</style>
     <div className="container mt-4">
 
       <h2>Tu Carrito</h2>
 
-      {store.carrito?.length === 0 ? (
+      {productosCarrito.length === 0 ? (
         <p>No hay productos en el carrito.</p>
       ) : (
         <div className="row">
@@ -117,34 +162,65 @@ const Carrito = () => {
               <div className="card shadow">
 
                 <img
-                  src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/${item.producto.imagen}`}
-                  alt={item.name}
-                  className="card-img-top"
-                  style={{ height: "200px", objectFit: "cover" }}
+                  src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/${item.producto?.imagen}`}
+                  alt={item?.name}
+                  className="w-100" // Hace que ocupe todo el ancho
+                  style={{
+                    height: "220px",       // Altura fija como en ListarProductos
+                    objectFit: "contain",  // 🔥 CLAVE: muestra TODA la imagen (no la recorta)
+                    background: "#fff",    // Fondo blanco para que no se vea feo si sobra espacio
+                    padding: "15px",       // Espacio interno (como marco)
+                    borderRadius: "15px"   // Bordes redondeados
+                  }}
                 />
 
                 <div className="card-body">
 
-                  <h5 className="card-title">{item.producto.name}</h5>
+                  <h5 className="card-title">{item.producto?.name}</h5>
 
-                  <p className="card-text">{item.producto.descripcion}</p>
+                  <p className="card-text"><strong>Descripcion:</strong> {item.producto?.descripcion}</p>
 
-                  <p><strong>Precio:</strong> Lps. {item.producto.precio}</p>
+                  <p><strong>Precio:</strong> Lps. {item.producto?.precio}</p>
 
-                  <p><strong>Cantidad:</strong> {item.cantidad}</p>
+              
 
-                  <button className="btn btn-warning me-2" onClick={() => reduzco(item.carrito_id, item.cantidad)}>
-                    <strong>-</strong>
-                  </button>
+                  <div className="d-flex align-items-center justify-content-between mt-3">
 
-                  <button className="btn btn-success me-2" onClick={() => aumento(item.carrito_id, item.cantidad)}>
-                    <strong>+</strong>
-                  </button>
+                    {/* CONTROL MODERNO */}
+                    <div className="cantidad-pill">
 
-                  <button className="btn btn-danger" onClick={() => eliminar(item.carrito_id)}>
-                    <strong>🗑️</strong>
-                  </button>
+                      {/* MENOS */}
+                      <button
+                        className="pill-btn"
+                        onClick={() => reduzco(item.carrito_id, item.cantidad)}
+                      >
+                        −
+                      </button>
 
+                      {/* CANTIDAD */}
+                      <span className="pill-number">
+                        {item.cantidad}
+                      </span>
+
+                      {/* MÁS */}
+                      <button
+                        className="pill-btn"
+                        onClick={() => aumento(item.carrito_id, item.cantidad)}
+                      >
+                        +
+                      </button>
+
+                    </div>
+
+                    {/* BOTÓN ELIMINAR SEPARADO */}
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => eliminar(item.carrito_id)}
+                    >
+                      🗑️
+                    </button>
+
+                  </div>
                 </div>
 
               </div>
@@ -190,7 +266,8 @@ const Carrito = () => {
 
       </div>
 
-    </div>
+    </div> 
+    </>
   );
 };
 

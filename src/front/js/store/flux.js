@@ -12,7 +12,8 @@ const getState = ({ getStore, getActions, setStore }) => {
             token: localStorage.getItem("token") || null,
             role: localStorage.getItem("role") || null,
             producto: {},
-            productos: [],
+            productos: [], 
+            imagenes:null,
             carrito: [],
             carritos: [],
             categorias: [],
@@ -571,6 +572,43 @@ const getState = ({ getStore, getActions, setStore }) => {
                 } catch (error) {
                     console.error("Error al agregar producto", error)
                     setStore({ ...getStore(), message: error.message })
+                }
+            },
+
+            //Lista de Imagenes: 
+            agregarImagenesProducto: async (product_id, imagenes) => {
+
+                const formData = new FormData() // crea contenedor para enviar archivos
+
+                // 🔁 recorrer todas las imágenes
+                for (let i = 0; i < imagenes.length; i++) {
+                    formData.append("imagenes", imagenes[i]) // mismo nombre que backend espera
+                }
+
+                try {
+
+                    const token = getStore().token // obtener token
+
+                    const response = await fetch(`${baseUrl}api/producto/${product_id}/imagenes`, {
+                        method: "POST", // tipo POST
+                        headers: {
+                            Authorization: `Bearer ${token}` // enviar token
+                        },
+                        body: formData // enviar archivos
+                    })
+
+                    if (!response.ok) {
+                        const error = await response.json()
+                        throw new Error(error.msg || "Error al subir imágenes")
+                    }
+
+                    const data = await response.json()
+
+                    return data // devolver respuesta
+
+                } catch (error) {
+                    console.error("Error subiendo imágenes:", error)
+                    throw error
                 }
             },
             //Agregar un producto al carrito 

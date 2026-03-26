@@ -208,8 +208,14 @@ const BuscarProductos = () => {
                             <img
                                 src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev${producto.imagen}?t=${timestamp}`}
                                 alt={producto.name}
-                                className="card-img-top"
-                                style={{ height: "200px", objectFit: "cover" }}
+                                className="w-100" // Hace que ocupe todo el ancho
+                                style={{
+                                    height: "220px",       // Altura fija como en ListarProductos
+                                    objectFit: "contain",  // 🔥 CLAVE: muestra TODA la imagen (no la recorta)
+                                    background: "#fff",    // Fondo blanco para que no se vea feo si sobra espacio
+                                    padding: "15px",       // Espacio interno (como marco)
+                                    borderRadius: "15px"   // Bordes redondeados
+                                }}
                             />
 
 
