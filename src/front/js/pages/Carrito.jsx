@@ -268,8 +268,8 @@ const Carrito = () => {
             <div>
               <h6 className="mb-1" style={{ fontWeight: "700", color: "#1a1a1a" }}>Información de Entrega</h6>
               <p className="mb-0" style={{ fontSize: "14px", color: "#444", lineHeight: "1.4" }}>
-                El envío se <strong>paga al recibir</strong>. Su pedido se enviará con <strong>CX807 Express Honduras</strong>.
-                Le enviaremos un tracking de la orden al realizar su pedido. Se lo enviaremos por <strong>WhatsApp</strong>.
+                 Su pedido se enviará con <strong>CX807 Express Honduras</strong>.
+                Le enviaremos un numero tracking de la orden al realizar su pedido. Se lo enviaremos por <strong>WhatsApp</strong>.
               </p>
             </div>
           </div>

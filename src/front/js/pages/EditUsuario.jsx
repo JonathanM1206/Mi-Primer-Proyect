@@ -92,62 +92,115 @@ const EditUsuario = () => {
     console.log("localStorage user:", localStorage.getItem("user"));
 
     return (
-        <div style={{ paddingTop: '10px', display: 'flex', justifyContent: 'center' }}>
-            {/* //Informacion */}
-            <div className='     Perfil   ' >
-                <h1>Mi Perfil</h1>
-                <p>
-                    <strong>User: </strong>
-                    {isEditing ? <input type='name' name='name' value={userData.name} onChange={handleChange} /> : name}
-                </p>
-                <p>
-                    <strong>Email: </strong>
-                    {isEditing ? <input type='email' name='email' value={userData.email} onChange={handleChange} /> : email}
-                </p>
-                <p>
-                    <strong>Telefono: </strong>
-                    {isEditing ? <input type='number' name='telefono' value={userData.telefono} onChange={handleChange} /> : telefono}
-                </p>
-                <p>
-                    <strong>Direccion: </strong>
-                    {isEditing ? <input type='direccion' name='direccion' value={userData.direccion} onChange={handleChange} /> : direccion}
-                </p>
-                {/* <p> 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <strong>Password:</strong> 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        {isEditing ? <input type='password' name='password' value={userData.password} onChange={handleChange}/>: password}</p> */}
+       <div className="container" style={{ paddingTop: '20px' }}>
+        <div className="row justify-content-center g-4"> {/* g-4 da espacio entre las columnas */}
+            
+            {/* --- SECCIÓN INFORMACIÓN --- */}
+            <div className="col-12 col-md-7 col-lg-6">
+                <div className='Perfil p-4 shadow-sm h-100' style={{ backgroundColor: "#fff", borderRadius: "12px", border: "1px solid #eee" }}>
+                    <h2 className="mb-4 text-primary text-center text-md-start" style={{ fontWeight: "700" }}>Mi Perfil</h2>
+                    
+                    <div className="table-responsive"> {/* Evita que la tabla desborde en móviles muy pequeños */}
+                        <table className="table table-borderless align-middle">
+                            <tbody>
+                                <tr>
+                                    <td style={{ width: "100px" }}><strong>Usuario:</strong></td>
+                                    <td>
+                                        {isEditing ? (
+                                            <input type='text' name='name' className="form-control form-control-sm" value={userData.name} onChange={handleChange} />
+                                        ) : (
+                                            <span className="text-muted">{name}</span>
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>
+                                        {isEditing ? (
+                                            <input type='email' name='email' className="form-control form-control-sm" value={userData.email} onChange={handleChange} />
+                                        ) : (
+                                            <span className="text-muted">{email}</span>
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Teléfono:</strong></td>
+                                    <td>
+                                        {isEditing ? (
+                                            <input type='number' name='telefono' className="form-control form-control-sm" value={userData.telefono} onChange={handleChange} />
+                                        ) : (
+                                            <span className="text-muted">{telefono}</span>
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dirección:</strong></td>
+                                    <td>
+                                        {isEditing ? (
+                                            <input type='text' name='direccion' className="form-control form-control-sm" value={userData.direccion} onChange={handleChange} />
+                                        ) : (
+                                            <span className="text-muted">{direccion}</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            {/* Botones de Editar y Guardar */}
-            <div className='Botones' style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px"
-            }}>
-                {isEditing ? (
-                    <>
-                        <button className='btn btn-success' onClick={handleSave}>Guardar</button>
-                        <button className='btn btn-secondary' onClick={handleEdit}>Cancelar</button>
-                    </>
 
-                ) : (
-                    <button className='btn btn-primary' onClick={handleEdit}>Editar</button>
-                )}
-                {(role === 'user' || role === 'admin') && (
-                    <>
-                        <button className='btn btn-danger' onClick={eliminarMe}>Eliminar Cuenta</button>
-                        <button className='btn btn-warning' onClick={() => handleLogout()}>Logout</button>
-                        <button
-                            className='btn btn-success'
-                            onClick={() => navigate("/cambiarContrasena")}
-                        >
-                            Cambiar Contrasena
-                        </button>
-                    </>
-                )}
+            {/* --- SECCIÓN BOTONES --- */}
+            <div className="col-12 col-md-4 col-lg-3">
+                <div className='Botones h-100'>
+                    <table className="table table-hover border shadow-sm" style={{ borderRadius: "12px", overflow: "hidden", backgroundColor: "#fff" }}>
+                        <tbody>
+                            {isEditing ? (
+                                <>
+                                    <tr>
+                                        <td className="p-2">
+                                            <button className='btn btn-success w-100' onClick={handleSave}>✅ Guardar Cambios</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="p-2">
+                                            <button className='btn btn-secondary w-100' onClick={handleEdit}>❌ Cancelar</button>
+                                        </td>
+                                    </tr>
+                                </>
+                            ) : (
+                                <tr>
+                                    <td className="p-2">
+                                        <button className='btn btn-primary w-100' onClick={handleEdit}>📝 Editar Perfil</button>
+                                    </td>
+                                </tr>
+                            )}
 
+                            {(role === 'user' || role === 'admin') && (
+                                <>
+                                    <tr>
+                                        <td className="p-2">
+                                            <button className='btn btn-outline-success w-100' onClick={() => navigate("/cambiarContrasena")}>🔑 Cambiar Contraseña</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="p-2">
+                                            <button className='btn btn-warning w-100' onClick={handleLogout}>🚪 Cerrar Sesión</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="p-2">
+                                            <button className='btn btn-danger w-100' onClick={eliminarMe}>🗑️ Eliminar Cuenta</button>
+                                        </td>
+                                    </tr>
+                                </>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
         </div>
+    </div>
     )
 }
 

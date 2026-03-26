@@ -82,7 +82,7 @@ const Navbar = () => {
 
           {/* LOGO */}
           <Link className="navbar-brand" to="/">
-            Home
+            Inicio
           </Link>
 
           {/* BOTÓN RESPONSIVE */}

@@ -1,6 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Context } from '../store/appContext.jsx';
+import { Context } from '../store/appContext.jsx'; 
+import carga from "../../../assets/loading.gif"
+
 import swal from 'sweetalert';
 
 const CrearProducto = () => {
@@ -13,13 +15,17 @@ const CrearProducto = () => {
     const [nuevaCategoria, setNuevaCategoria] = useState('');
     const { actions, store } = useContext(Context);
     const [error, setError] = useState('');
-    const navigate = useNavigate();
+    const navigate = useNavigate(); 
+        const [loading, setLoading] = useState(false);
+    
 
     useEffect(() => {
         actions.getCategorias();
     }, []);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => { 
+         if (loading) return; //Evita el doble click 
+          setLoading(true) //Activa el Bloqueo del boton
         e.preventDefault();
 
         let categoriaFinalId = categoria_id;
@@ -76,6 +82,8 @@ const CrearProducto = () => {
         } catch (err) {
             swal("Error", "Por favor, verifica los datos ingresados", "error");
             setError("Error al crear el producto");
+        } finally {
+            setLoading(false); // <--- DESBLOQUEAR AL FINALIZAR
         }
     };
 
@@ -147,7 +155,7 @@ const CrearProducto = () => {
                     className='form-control border-success shadow mb-3'
                 />
 
-                <button type="submit" className="btn btn-primary w-100">Agregar Producto</button>
+                <button type="submit" className="btn btn-primary w-100"  disabled={loading}>{loading ? "Procesando..." : "Agregar Producto"}</button>
                 {error && <p className="text-danger text-center mt-2">{error}</p>}
             </form>
         </div>
