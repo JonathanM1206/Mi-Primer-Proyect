@@ -12,8 +12,8 @@ const getState = ({ getStore, getActions, setStore }) => {
             token: localStorage.getItem("token") || null,
             role: localStorage.getItem("role") || null,
             producto: {},
-            productos: [], 
-            imagenes:null,
+            productos: [],
+            imagenes: null,
             carrito: [],
             carritos: [],
             categorias: [],
@@ -608,6 +608,32 @@ const getState = ({ getStore, getActions, setStore }) => {
 
                 } catch (error) {
                     console.error("Error subiendo imágenes:", error)
+                    throw error
+                }
+            },
+            //Eliminar De la Galerioa de Imagenes: 
+            eliminarImagenProducto: async (image_id) => {
+
+                try {
+
+                    const token = getStore().token
+
+                    const response = await fetch(`${baseUrl}api/producto/imagen/${image_id}`, {
+                        method: "DELETE",
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    })
+
+                    if (!response.ok) {
+                        const error = await response.json()
+                        throw new Error(error.msg || "Error al eliminar")
+                    }
+
+                    return await response.json()
+
+                } catch (error) {
+                    console.error(error)
                     throw error
                 }
             },

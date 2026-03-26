@@ -760,7 +760,31 @@ def agregar_imagenes(product_id):
 
     db.session.commit()
 
-    return jsonify({"msg": "Imágenes agregadas correctamente"}), 201
+    return jsonify({"msg": "Imágenes agregadas correctamente"}), 201 
+
+#Delete Imagenes de la Galeria de Imagenes
+@api.route('/producto/imagen/<int:image_id>', methods=['DELETE'])
+@jwt_required()
+def eliminar_imagen(image_id):
+
+    imagen = ProductImage.query.get(image_id)
+
+    if not imagen:
+        return jsonify({"msg": "Imagen no encontrada"}), 404
+
+    # 🗑️ eliminar archivo físico (opcional pero recomendado)
+    try:
+        ruta = os.path.join(app.config['UPLOAD_FOLDER'], imagen.url)
+        if os.path.exists(ruta):
+            os.remove(ruta)
+    except Exception as e:
+        print("Error borrando archivo:", e)
+
+    # 🧱 eliminar de DB
+    db.session.delete(imagen)
+    db.session.commit()
+
+    return jsonify({"msg": "Imagen eliminada"}), 200 
 
 #DELETE Producto 
 @api.route('/delete_producto/<int:product_id>',methods=['DELETE']) 

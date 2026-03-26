@@ -7,7 +7,7 @@ const DetalleProducto = () => {
     const { store, actions } = useContext(Context);
     const { id } = useParams();
     const navigate = useNavigate();
-    
+
     const [producto, setProducto] = useState(null);
     const [cantidad, setCantidad] = useState(1);
     const [editando, setEditando] = useState(false);
@@ -16,8 +16,31 @@ const DetalleProducto = () => {
     const [imagenActiva, setImagenActiva] = useState(null);
 
     // Determinar rol de forma segura
-    const role = store.role || localStorage.getItem('role');
+    const role = store.user?.role || store.admin?.role || null;
     const baseUrl = 'https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev';
+
+    const eliminarImagen = async (image_id) => {
+
+        const confirmar = await swal({
+            title: "¿Eliminar imagen?",
+            icon: "warning",
+            buttons: true
+        })
+
+        if (!confirmar) return
+
+        try {
+
+            await actions.eliminarImagenProducto(image_id)
+
+            swal("Eliminada", "Imagen eliminada", "success")
+
+            fetchProducto() // 🔥 recargar
+
+        } catch (error) {
+            swal("Error", "No se pudo eliminar", "error")
+        }
+    }
 
     const fetchProducto = async () => {
         try {
@@ -60,7 +83,7 @@ const DetalleProducto = () => {
         try {
             // 1. Actualizar datos básicos
             await actions.editarProducto(productoEditado, producto.product_id);
-            
+
             // 2. Si hay nuevas imágenes, subirlas usando la acción que proporcionaste
             if (nuevasImagenes && nuevasImagenes.length > 0) {
                 await actions.agregarImagenesProducto(producto.product_id, nuevasImagenes);
@@ -69,7 +92,7 @@ const DetalleProducto = () => {
             swal("Actualizado", "El producto ha sido modificado con éxito", "success");
             setEditando(false);
             setNuevasImagenes(null);
-            fetchProducto(); 
+            fetchProducto();
         } catch (error) {
             swal("Error", "No se pudieron guardar los cambios", "error");
         }
@@ -156,16 +179,41 @@ const DetalleProducto = () => {
                                         className="zoom-image"
                                     />
                                 </div>
-                                
+
                                 <div className="d-flex mt-3 gap-2 flex-wrap">
                                     {producto.imagenes?.map((img, index) => (
-                                        <img
-                                            key={index}
-                                            src={`${baseUrl}${img.url}`}
-                                            className={`mini-img ${imagenActiva === img.url ? 'active' : ''}`}
-                                            onClick={() => setImagenActiva(img.url)}
-                                            alt="miniatura"
-                                        />
+                                        <div key={index} style={{ position: "relative", display: "inline-block" }}>
+
+                                            <img
+                                                src={`${baseUrl}${img.url}`}
+                                                className={`mini-img ${imagenActiva === img.url ? 'active' : ''}`}
+                                                onClick={() => setImagenActiva(img.url)}
+                                                alt="miniatura"
+                                            />
+
+                                            {role === "admin" && (
+                                                <button
+                                                    onClick={() => eliminarImagen(img.image_id)}
+                                                    style={{
+                                                        position: "absolute",   // 🔥 clave
+                                                        top: "0px",             // 🔥 ajusta aquí si quieres
+                                                        right: "0px",
+                                                        background: "red",
+                                                        color: "white",
+                                                        border: "none",
+                                                        borderRadius: "50%",
+                                                        width: "18px",
+                                                        height: "18px",
+                                                        fontSize: "10px",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    x
+                                                </button>
+                                            )}
+
+                                        </div>
+
                                     ))}
                                 </div>
                             </div>
@@ -179,28 +227,28 @@ const DetalleProducto = () => {
                                             type="text"
                                             className="form-control mb-2"
                                             value={productoEditado.name}
-                                            onChange={(e) => setProductoEditado({...productoEditado, name: e.target.value})}
+                                            onChange={(e) => setProductoEditado({ ...productoEditado, name: e.target.value })}
                                             placeholder="Nombre"
                                         />
                                         <textarea
                                             className="form-control mb-2"
                                             rows="3"
                                             value={productoEditado.descripcion}
-                                            onChange={(e) => setProductoEditado({...productoEditado, descripcion: e.target.value})}
+                                            onChange={(e) => setProductoEditado({ ...productoEditado, descripcion: e.target.value })}
                                             placeholder="Descripción"
                                         />
                                         <div className="row mb-2">
                                             <div className="col">
-                                                <input type="number" className="form-control" value={productoEditado.precio} onChange={(e) => setProductoEditado({...productoEditado, precio: e.target.value})} placeholder="Precio" />
+                                                <input type="number" className="form-control" value={productoEditado.precio} onChange={(e) => setProductoEditado({ ...productoEditado, precio: e.target.value })} placeholder="Precio" />
                                             </div>
                                             <div className="col">
-                                                <input type="number" className="form-control" value={productoEditado.cantidad} onChange={(e) => setProductoEditado({...productoEditado, cantidad: e.target.value})} placeholder="Stock" />
+                                                <input type="number" className="form-control" value={productoEditado.cantidad} onChange={(e) => setProductoEditado({ ...productoEditado, cantidad: e.target.value })} placeholder="Stock" />
                                             </div>
                                         </div>
-                                        
+
                                         <label className="form-label mt-2 small">Añadir más imágenes:</label>
                                         <input type="file" multiple className="form-control mb-3" onChange={handleFileChange} />
-                                        
+
                                         <div className="d-flex gap-2">
                                             <button className="btn btn-success w-100" onClick={guardarCambios}>Guardar</button>
                                             <button className="btn btn-light w-100" onClick={() => setEditando(false)}>Cancelar</button>
@@ -212,7 +260,7 @@ const DetalleProducto = () => {
                                         <h3 className="text-primary my-3">Lps. {parseFloat(producto.precio).toLocaleString()}</h3>
                                         <p className="text-muted">{producto.descripcion}</p>
                                         <p><strong>Disponibles:</strong> {producto.cantidad} unidades</p>
-                                        
+
                                         <div className="d-flex align-items-center gap-3 mt-4">
                                             <input
                                                 type="number"
@@ -241,7 +289,7 @@ const DetalleProducto = () => {
                                 )}
                             </div>
                         </div>
-                        
+
                         <div className="text-center mt-5">
                             <Link to="/ListarProductos" className="text-decoration-none text-secondary">
                                 <i className="fas fa-arrow-left me-2"></i>Volver a la tienda

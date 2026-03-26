@@ -101,10 +101,10 @@ const Carrito = () => {
   const productosCarrito = Array.isArray(store.carrito)
     ? store.carrito.filter(item => item.producto) // 🔥 SOLO los que existen
     : [];
-  return ( 
-    <> 
-    <style>
-{`
+  return (
+    <>
+      <style>
+        {`
 /* CONTENEDOR TIPO CÁPSULA */
 .cantidad-pill {
   display: flex;                 /* coloca elementos en fila */
@@ -145,128 +145,137 @@ const Carrito = () => {
   cursor: not-allowed;
 }
 `}
-</style>
-    <div className="container mt-4">
+      </style>
+      <div className="container mt-4">
 
-      <h2>Tu Carrito</h2>
+        <h2>Tu Carrito</h2>
 
-      {productosCarrito.length === 0 ? (
-        <p>No hay productos en el carrito.</p>
-      ) : (
-        <div className="row">
+        {productosCarrito.length === 0 ? (
+          <p>No hay productos en el carrito.</p>
+        ) : (
+          <div className="row">
 
-          {productosCarrito.map((item, index) => (
+            {productosCarrito.map((item, index) => (
 
-            <div key={index} className="col-md-4 mb-4">
+              <div key={index} className="col-md-4 mb-4">
 
-              <div className="card shadow">
+                <div className="card shadow">
 
-                <img
-                  src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/${item.producto?.imagen}`}
-                  alt={item?.name}
-                  className="w-100" // Hace que ocupe todo el ancho
-                  style={{
-                    height: "220px",       // Altura fija como en ListarProductos
-                    objectFit: "contain",  // 🔥 CLAVE: muestra TODA la imagen (no la recorta)
-                    background: "#fff",    // Fondo blanco para que no se vea feo si sobra espacio
-                    padding: "15px",       // Espacio interno (como marco)
-                    borderRadius: "15px"   // Bordes redondeados
-                  }}
-                />
+                  <img
+                    src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev/${item.producto?.imagen}`}
+                    alt={item?.name}
+                    className="w-100" // Hace que ocupe todo el ancho
+                    style={{
+                      height: "220px",       // Altura fija como en ListarProductos
+                      objectFit: "contain",  // 🔥 CLAVE: muestra TODA la imagen (no la recorta)
+                      background: "#fff",    // Fondo blanco para que no se vea feo si sobra espacio
+                      padding: "15px",       // Espacio interno (como marco)
+                      borderRadius: "15px"   // Bordes redondeados
+                    }}
+                  />
 
-                <div className="card-body">
+                  <div className="card-body">
 
-                  <h5 className="card-title">{item.producto?.name}</h5>
+                    <h5 className="card-title">{item.producto?.name}</h5>
 
-                  <p className="card-text"><strong>Descripcion:</strong> {item.producto?.descripcion}</p>
+                    <p className="card-text"><strong>Descripcion:</strong> {item.producto?.descripcion}</p>
 
-                  <p><strong>Precio:</strong> Lps. {item.producto?.precio}</p>
+                    <p><strong>Precio:</strong> Lps. {item.producto?.precio}</p>
 
-              
 
-                  <div className="d-flex align-items-center justify-content-between mt-3">
 
-                    {/* CONTROL MODERNO */}
-                    <div className="cantidad-pill">
+                    <div className="d-flex align-items-center justify-content-between mt-3">
 
-                      {/* MENOS */}
+                      {/* CONTROL MODERNO */}
+                      <div className="cantidad-pill">
+
+                        {/* MENOS */}
+                        <button
+                          className="pill-btn"
+                          onClick={() => reduzco(item.carrito_id, item.cantidad)}
+                        >
+                          −
+                        </button>
+
+                        {/* CANTIDAD */}
+                        <span className="pill-number">
+                          {item.cantidad}
+                        </span>
+
+                        {/* MÁS */}
+                        <button
+                          className="pill-btn"
+                          onClick={() => aumento(item.carrito_id, item.cantidad)}
+                        >
+                          +
+                        </button>
+
+                      </div>
+
+                      {/* BOTÓN ELIMINAR SEPARADO */}
                       <button
-                        className="pill-btn"
-                        onClick={() => reduzco(item.carrito_id, item.cantidad)}
+                        className="btn btn-danger"
+                        onClick={() => eliminar(item.carrito_id)}
                       >
-                        −
-                      </button>
-
-                      {/* CANTIDAD */}
-                      <span className="pill-number">
-                        {item.cantidad}
-                      </span>
-
-                      {/* MÁS */}
-                      <button
-                        className="pill-btn"
-                        onClick={() => aumento(item.carrito_id, item.cantidad)}
-                      >
-                        +
+                        🗑️
                       </button>
 
                     </div>
-
-                    {/* BOTÓN ELIMINAR SEPARADO */}
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => eliminar(item.carrito_id)}
-                    >
-                      🗑️
-                    </button>
-
                   </div>
+
                 </div>
 
               </div>
 
-            </div>
+            ))}
 
-          ))}
-
-        </div>
-      )}
+          </div>
+        )}
 
 
-      <button className="btn btn-danger" onClick={() => vaciandoCarrito()}>
-        Vaciar Carrito
-      </button>
-
-
-      {/* BOTON PAGAR */}
-      <div className="mt-3">
-
-        <button
-          className="btn btn-success"
-          onClick={() => {
-
-            if (store.token) {
-
-              // Si el usuario esta logueado
-              navigate("/MetodoPago")
-
-            } else {
-
-              // Si es invitado
-              navigate("/PagoInvitado")
-
-            }
-
-          }}
-        >
-
-          Pagar
-
+        <button className="btn btn-danger" onClick={() => vaciandoCarrito()}>
+          Vaciar Carrito
         </button>
 
-      </div>
 
-    </div> 
+        {/* BOTON PAGAR */}
+        <div className="mt-3">
+
+          <button
+            className="btn btn-success"
+            onClick={() => {
+
+              if (store.token) {
+
+                // Si el usuario esta logueado
+                navigate("/MetodoPago")
+
+              } else {
+
+                // Si es invitado
+                navigate("/PagoInvitado")
+
+              }
+
+            }}
+          >
+
+            Pagar
+
+          </button>
+          <div className="mt-4 p-3 d-flex align-items-center shadow-sm" style={{ border: "1px solid #e3e3e3", borderRadius: "12px", backgroundColor: "#fdfdfd", maxWidth: "550px" ,marginBottom:"15px"}}>
+            <span className="me-3" style={{ fontSize: "35px" }}>🚚</span>
+            <div>
+              <h6 className="mb-1" style={{ fontWeight: "700", color: "#1a1a1a" }}>Información de Entrega</h6>
+              <p className="mb-0" style={{ fontSize: "14px", color: "#444", lineHeight: "1.4" }}>
+                El envío se <strong>paga al recibir</strong>. Su pedido se enviará con <strong>CX807 Express Honduras</strong>.
+                Le enviaremos un tracking de la orden al realizar su pedido. Se lo enviaremos por <strong>WhatsApp</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </>
   );
 };

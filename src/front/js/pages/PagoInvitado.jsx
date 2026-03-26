@@ -2,9 +2,9 @@ import React, { useState, useContext } from "react";
 import { Context } from "../store/appContext";
 import { useNavigate } from "react-router-dom";
 import swal from "sweetalert";
-
+import carga from "../../../assets/loading.gif"
 export const PagoInvitado = () => {
-
+    const [loading, setLoading] = useState(false);
     const { actions } = useContext(Context); // obtenemos actions
     const navigate = useNavigate(); // hook para navegar
 
@@ -31,137 +31,168 @@ export const PagoInvitado = () => {
     // -------------------------
     // REGISTRAR + LOGIN
     // -------------------------
-const registrarYLogin = async () => {
+    const registrarYLogin = async () => {
 
-    try {
+        try {
 
-        const registrado = await actions.registroUsuario(
-            formData.name,
-            formData.correo,
-            formData.telefono,
-            formData.direccion,
-            formData.password
-        );
+            const registrado = await actions.registroUsuario(
+                formData.name,
+                formData.correo,
+                formData.telefono,
+                formData.direccion,
+                formData.password
+            );
 
-        if (!registrado) {
-            throw new Error("No se pudo registrar el usuario");
+            if (!registrado) {
+                throw new Error("No se pudo registrar el usuario");
+            }
+
+            await actions.loginUsuario(formData.correo, formData.password);
+
+            return true;
+
+        } catch (error) {
+
+            swal("Error", error.message, "error");
+
+            return false;
+
         }
 
-        await actions.loginUsuario(formData.correo, formData.password);
-
-        return true;
-
-    } catch (error) {
-
-        swal("Error", error.message, "error");
-
-        return false;
-
-    }
-
-};
+    };
 
     // -------------------------
-    // PAGO TRANSFERENCIA
+    // PAGO TRANSFERENCIA (CON CONFIRMACIÓN)
     // -------------------------
     const pagarTransferencia = async () => {
+        if (loading) return; //Evita el doble click
+        // 1. Mostrar mensaje explicativo antes de proceder
+        const confirmar = await swal({
+            title: "¿Confirmar pago por transferencia?",
+            text: "Enviaremos su pedido al momento que recibamos la transferencia. Recibirá un correo con las Cuentas de Banco y deberá enviarnos una captura al WhatsApp para procesar su orden.",
+            icon: "info",
+            buttons: {
+                cancel: "Cancelar",
+                confirm: {
+                    text: "Entendido, pagar",
+                    value: true,
+                    visible: true,
+                    className: "btn-primary",
+                    closeModal: true
+                }
+            },
+        });
 
-        const ok = await registrarYLogin(); // registrar usuario
+        // Si el usuario cancela, no hace nada
+        if (!confirmar) return;
+        setLoading(true) //Activa el Bloqueo del boton
 
+        // 2. Proceder con el registro y login
+        const ok = await registrarYLogin();
         if (!ok) return;
 
+        // 3. Crear el pedido
         const pedido = await actions.crearPedido({
-            total: 50,
+            total: 50, // Recuerda que aquí puedes pasar store.total si lo tienes
             direccion: formData.direccion
         });
 
-        // validar que pedido exista
         if (!pedido) {
-
             swal("Error", "No se pudo crear el pedido", "error");
             return;
-
         }
 
-        const response = await fetch(`${baseUrl}api/pago/transferencia`, {
+        // 4. Registrar el método de pago en el backend
+        try {
+            const response = await fetch(`${baseUrl}api/pago/transferencia`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    pedido_id: pedido.pedido_id
+                })
+            });
 
-            method: "POST",
+            if (!response.ok) {
+                swal("Error", "No se pudo registrar el pago", "error");
+                return;
+            }
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+            await actions.vaciarCarrito(); // limpiar carrito frontend
 
-            body: JSON.stringify({
-                pedido_id: pedido.pedido_id
-            })
+            // Mensaje final de éxito
+            swal("¡Pedido en Espera!", "Revisa tu correo para los datos bancarios y recuerda enviar el comprobante por WhatsApp.", "success");
 
-        });
+            navigate("/HistorialPedidos");
 
-        if (!response.ok) {
-
-            swal("Error", "No se pudo crear el pago", "error");
-            return;
-
+        } catch (error) {
+            console.error("Error en pago transferencia:", error);
+            swal("Error", "Ocurrió un problema en la comunicación con el servidor", "error");
+        } finally {
+            setLoading(false); // <--- DESBLOQUEAR AL FINALIZAR
         }
-
-        await actions.vaciarCarrito(); // limpiar carrito frontend
-
-        swal("Pedido creado", "Pago por transferencia generado", "success");
-
-        navigate("/HistorialPedidos");
-
     };
-    // -------------------------
+    //-------------------------
     // PAGO Al recibir
     // -------------------------
     const pagarContraEntrega = async () => {
+        if (loading) return;
 
-        const ok = await registrarYLogin();
+        setLoading(true); // <--- ACTIVAR BLOQUEO 
+        try {
+            const ok = await registrarYLogin();
 
-        if (!ok) return;
+            if (!ok) return;
 
-        const pedido = await actions.crearPedido({
-            total: 50,
-            direccion: formData.direccion
-        });
+            const pedido = await actions.crearPedido({
+                total: 50,
+                direccion: formData.direccion
+            });
 
-        if (!pedido) {
+            if (!pedido) {
 
-            swal("Error", "No se pudo crear el pedido", "error");
-            return;
+                swal("Error", "No se pudo crear el pedido", "error");
+                return;
 
+            }
+
+            const response = await fetch(`${baseUrl}api/pago/contra_entrega`, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    pedido_id: pedido.pedido_id
+                })
+
+            });
+
+            if (!response.ok) {
+
+                swal("Error", "No se pudo crear el pago", "error");
+                return;
+
+            }
+
+            await actions.vaciarCarrito();
+
+            swal(
+                "Pedido creado",
+                "Pagarás cuando recibas el pedido. Recibirás tracking por WhatsApp.",
+                "success"
+            );
+
+            navigate("/HistorialPedidos");
+        } catch (error) {
+            swal("Error", "Problema de conexión", "error");
+        } finally {
+            setLoading(false); // <--- DESBLOQUEAR
         }
 
-        const response = await fetch(`${baseUrl}api/pago/contra_entrega`, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                pedido_id: pedido.pedido_id
-            })
-
-        });
-
-        if (!response.ok) {
-
-            swal("Error", "No se pudo crear el pago", "error");
-            return;
-
-        }
-
-        await actions.vaciarCarrito();
-
-        swal(
-            "Pedido creado",
-            "Pagarás cuando recibas el pedido. Recibirás tracking por WhatsApp.",
-            "success"
-        );
-
-        navigate("/HistorialPedidos");
 
     };
 
@@ -203,7 +234,7 @@ const registrarYLogin = async () => {
                 <input
                     type="text"
                     name="direccion"
-                    placeholder="Direccion"
+                    placeholder="Direccion, incluya departamento y ciudad"
                     className="form-control mb-3"
                     onChange={handleChange}
                     required
@@ -224,18 +255,30 @@ const registrarYLogin = async () => {
                         type="button"
                         className="btn btn-primary me-3"
                         onClick={pagarTransferencia}
+                        disabled={loading} // <--- SE BLOQUEA AQUÍ
                     >
-                        Pagar por Transferencia
+                        {loading ? "Procesando..." : "Pagar por Transferencia"}
                     </button>
 
                     <button
                         type="button"
                         className="btn btn-success"
                         onClick={pagarContraEntrega}
+                        disabled={loading} // <--- SE BLOQUEA AQUÍ
                     >
-                        Pagar al recibir 💵
+                        {loading ? "Enviando..." : "Pagar al recibir 💵"}
                     </button>
-
+                    {/* SPINNER VISUAL */}
+                    {loading && (
+                        <div className='text-center mt-4'>
+                            <img
+                                src={carga}
+                                alt="Cargando..."
+                                style={{ width: "60px" }}
+                            />
+                            <p className="text-muted mt-2">Estamos procesando tu pedido, por favor no cierres esta ventana...</p>
+                        </div>
+                    )}
                 </div>
 
             </form>
