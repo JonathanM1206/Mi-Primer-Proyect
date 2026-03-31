@@ -258,7 +258,7 @@ const DetalleProducto = () => {
                                     <div className="ps-md-4">
                                         <h2 className="display-6 fw-bold">{producto.name}</h2>
                                         <h3 className="text-primary my-3">Lps. {parseFloat(producto.precio).toLocaleString()}</h3>
-                                        <p className="text-muted">{producto.descripcion}</p>
+                                        <p className="text-muted"><strong>Descripcion:</strong> {producto.descripcion}</p>
                                         <p><strong>Disponibles:</strong> {producto.cantidad} unidades</p>
 
                                         <div className="d-flex align-items-center gap-3 mt-4">

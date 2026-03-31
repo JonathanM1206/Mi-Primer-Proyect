@@ -81,30 +81,8 @@ const Footer = () => {
                         <hr style={{ borderTop: "1px solid white", opacity: "0.3" }} />
                     </div>
 
-                    {/* ORDER & SHIPPING */}
-                    <div className="flex flex-col items-center lg:items-start">
-                        <h4 className="text-lg font-semibold">
-                            Order & Shipping
-                        </h4>
-
-                        <div className="border-t border-gray-300 w-20 my-4"></div>
-
-                        <ul className="space-y-2 text-sm text-gray-200">
-                            <li className="hover:text-white cursor-pointer transition">
-                                Rastreo
-                            </li>
-                            <li className="hover:text-white cursor-pointer transition">
-                                Mi Cuenta
-                            </li>
-                            <li className="hover:text-white cursor-pointer transition">
-                                Checkout
-                            </li>
-                            <li className="hover:text-white cursor-pointer transition">
-                                Carrito
-                            </li>
-                        </ul>
-                    </div>
-                    <hr style={{ borderTop: "1px solid white", opacity: "0.3" }} />
+                    
+                   
                 </div>
 
                 {/* LÍNEA INFERIOR */}

@@ -47,7 +47,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     if (!response.ok) {
 
                         let errorMessage = 'Algo salió mal. Intenta de nuevo.';
-
+/usuario/pagos
                         try {
 
                             const errorData = await response.json();

@@ -1200,8 +1200,15 @@ def crear_pago_transferencia():
 
 
 #Panel Admin  de pago de los usuarios
-@api.route('/admin/pagos', methods=['GET'])
-def ver_todos_pagos():
+@api.route('/admin/pagos', methods=['GET']) 
+@jwt_required()
+def ver_todos_pagos(): 
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403 
+    
     pagos = Pago.query.order_by(Pago.fecha.desc()).all()
     resultado = []
 
@@ -1274,8 +1281,14 @@ def ver_pagos_usuario():
 # Cancelar pedido  (no se utiliza pero usar por si acaso se deja hasta produccion)
 # ======================
 
-@api.route('/pedido/<int:pedido_id>/cancelar', methods=['PUT'])
-def cancelar_pedido(pedido_id):
+@api.route('/pedido/<int:pedido_id>/cancelar', methods=['PUT']) 
+@jwt_required()
+def cancelar_pedido(pedido_id): 
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
 
     pedido = Pedido.query.get(pedido_id)
 
@@ -1296,8 +1309,15 @@ def cancelar_pedido(pedido_id):
 # ======================
 # Actualizar estado del pago de PAGADO Y PENDIENTE
 # ======================
-@api.route('/pago/<int:pago_id>', methods=['PUT'])
-def actualizar_estado_pago(pago_id):
+@api.route('/pago/<int:pago_id>', methods=['PUT']) 
+@jwt_required()
+def actualizar_estado_pago(pago_id): 
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403 
+    
     data = request.get_json()
     nuevo_estado = data.get('estado')
 
@@ -1318,8 +1338,14 @@ def actualizar_estado_pago(pago_id):
 # ======================
 # Actualizar estado del pago de ENVIADO y ENRTEGADO
 # ======================
-@api.route('/pedido/<int:pedido_id>/envio', methods=['PUT'])
-def actualizar_estado_envio(pedido_id):
+@api.route('/pedido/<int:pedido_id>/envio', methods=['PUT']) 
+@jwt_required()
+def actualizar_estado_envio(pedido_id): 
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
 
     data = request.get_json()
 
@@ -1347,8 +1373,15 @@ def actualizar_estado_envio(pedido_id):
 
 
 # EL ADMIN VE LO PAGOS EN UNA TABLA
-@api.route('/admin/pagos/usuario/<int:user_id>', methods=['GET'])
-def admin_pagos_por_usuario(user_id):
+@api.route('/admin/pagos/usuario/<int:user_id>', methods=['GET']) 
+@jwt_required()
+def admin_pagos_por_usuario(user_id): 
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403 
+    
     pagos = Pago.query.join(Pedido).filter(Pedido.user_id == user_id).all()
     resultado = []
 
@@ -1377,16 +1410,20 @@ def admin_pagos_por_usuario(user_id):
 # ======================
 # CREAR PEDIDO
 # ======================
-
 @api.route('/pedido', methods=['POST'])
 def crear_pedido():
 
-    data = request.get_json()  # obtenemos datos enviados desde frontend
+    data = request.get_json()  
+    # 🔹 obtenemos datos del frontend
 
-    total = data.get("total")  # total enviado
-    direccion = data.get("direccion")  # dirección del pedido
-    guest_id = data.get("guest_id")  # id invitado
-    user_id = data.get("user_id")  # id usuario
+    direccion = data.get("direccion")  
+    # 🔹 dirección del pedido
+
+    guest_id = data.get("guest_id")  
+    # 🔹 id invitado
+
+    user_id = data.get("user_id")  
+    # 🔹 id usuario
 
     # -----------------------------
     # MIGRAR CARRITO GUEST → USER
@@ -1395,14 +1432,17 @@ def crear_pedido():
     if user_id and guest_id:
 
         carrito_guest = Carrito.query.filter_by(guest_id=guest_id).all()  
-        # buscamos carrito del invitado
+        # 🔹 buscamos carrito del invitado
 
         for item in carrito_guest:
+            item.user_id = user_id  
+            # 🔹 ahora pertenece al usuario
 
-            item.user_id = user_id  # asignamos ahora al usuario
-            item.guest_id = None    # quitamos guest_id
+            item.guest_id = None  
+            # 🔹 eliminamos guest_id
 
-        db.session.commit()  # guardamos cambios
+        db.session.commit()  
+        # 🔹 guardamos cambios
 
     # -----------------------------
     # OBTENER CARRITO
@@ -1412,23 +1452,45 @@ def crear_pedido():
 
     if user_id:
         carrito_items = Carrito.query.filter_by(user_id=user_id).all()  
-        # buscamos carrito del usuario
+        # 🔹 carrito del usuario
 
     if not carrito_items and guest_id:
         carrito_items = Carrito.query.filter_by(guest_id=guest_id).all()  
-        # si no hay carrito user buscamos guest
+        # 🔹 carrito del invitado
 
-    # validar carrito vacío
+    # -----------------------------
+    # VALIDAR CARRITO
+    # -----------------------------
+
     if not carrito_items:
-
         return jsonify({"error": "El carrito está vacío"}), 400
+
+    # -----------------------------
+    # CALCULAR TOTAL (AQUÍ VA 🔥)
+    # -----------------------------
+
+    total = 0  # 🔹 inicializamos total
+
+    for item in carrito_items:
+
+        producto = Product.query.get(item.product_id)  
+        # 🔹 buscamos producto real
+
+        if not producto:
+            return jsonify({"error": "Producto no existe"}), 404  
+
+        subtotal = producto.precio * item.cantidad  
+        # 🔹 cálculo real
+
+        total += subtotal  
+        # 🔹 sumamos al total
 
     # -----------------------------
     # CREAR PEDIDO
     # -----------------------------
 
     nuevo_pedido = Pedido(
-        total=total,
+        total=total,  # 🔥 ahora es seguro
         direccion=direccion,
         guest_id=guest_id,
         user_id=user_id,
@@ -1437,9 +1499,8 @@ def crear_pedido():
     )
 
     db.session.add(nuevo_pedido)
-
     db.session.flush()  
-    # genera pedido_id antes del commit
+    # 🔹 obtenemos ID sin commit
 
     # -----------------------------
     # CREAR ITEMS DEL PEDIDO
@@ -1447,8 +1508,7 @@ def crear_pedido():
 
     for item in carrito_items:
 
-        producto = Product.query.get(item.product_id)  
-        # buscamos producto
+        producto = Product.query.get(item.product_id)
 
         pedido_item = PedidoItem(
             pedido_id=nuevo_pedido.pedido_id,
@@ -1464,23 +1524,25 @@ def crear_pedido():
     # -----------------------------
 
     if user_id:
-
         Carrito.query.filter_by(user_id=user_id).delete()
-
     else:
-
         Carrito.query.filter_by(guest_id=guest_id).delete()
 
-    db.session.commit() 
-    
+    db.session.commit()  
+    # 🔹 guardamos TODO
+
+    # -----------------------------
+    # ENVIAR CORREO
+    # -----------------------------
+
     if user_id:
         usuario = User.query.get(user_id)
 
         correo_recibo_pedido(
-        usuario,
-        nuevo_pedido,
-        nuevo_pedido.items
-    )
+            usuario,
+            nuevo_pedido,
+            nuevo_pedido.items
+        )
 
     return jsonify({
         "msg": "Pedido creado",
@@ -1489,9 +1551,10 @@ def crear_pedido():
     }), 201
 
 # ======================
-# Historial de pedidos usuario
+# Historial de pedidos del usuario
 # ======================
-@api.route('/pedidos', methods=['GET'])
+@api.route('/pedidos', methods=['GET']) 
+@jwt_required() #obliga a que el usuario esté logueado 
 def obtener_pedidos():
 
     user_id = request.args.get("user_id")
@@ -1560,9 +1623,15 @@ def obtener_pedidos():
 # ======================
 # Obtener pedidos de un día específico
 # ======================
-@api.route('/admin/pedidos/fecha/<fecha>', methods=['GET'])
+@api.route('/admin/pedidos/fecha/<fecha>', methods=['GET']) 
+@jwt_required()
 def pedidos_por_fecha(fecha):
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
 
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403 
+    
     try:
         fecha_dt = datetime.strptime(fecha, "%Y-%m-%d")
     except ValueError:
@@ -1622,8 +1691,14 @@ def pedidos_por_fecha(fecha):
 # ======================
 # Historial de pedidos por usuario ID para el Admin
 # ======================
-@api.route('/pedidos/usuario/<int:user_id>', methods=['GET'])
-def pedidos_por_usuario(user_id):
+@api.route('/pedidos/usuario/<int:user_id>', methods=['GET']) 
+@jwt_required()
+def pedidos_por_usuario(user_id): 
+    admin_id = get_jwt_identity()
+    admin = Administrador.query.get(admin_id)
+
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
 
     usuario = User.query.get(user_id)
 
