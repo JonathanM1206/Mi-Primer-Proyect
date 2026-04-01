@@ -106,7 +106,7 @@ export const MetodoPago = () => {
 
     return (
 
-        <div className="container text-center mt-5">
+        <div className="container text-center mt-5" style={{marginBottom:"350px"}}>
 
             <h3 className="mb-4">Selecciona método de pago</h3>
 
@@ -119,9 +119,10 @@ export const MetodoPago = () => {
             </button>
 
             <button
-                className="btn btn-success"
+                className="btn btn-success my-5"
                 onClick={pagarAlEntregar}
-                disabled={loading} // <--- SE BLOQUEA AQUÍ
+                disabled={loading} // <--- SE BLOQUEA AQUÍ 
+
             >
                 {loading ? "Enviando..." : "Pagar al recibir 💵"}
             </button>
@@ -131,7 +132,7 @@ export const MetodoPago = () => {
                     <img
                         src={carga}
                         alt="Cargando..."
-                        style={{ width: "60px" }}
+                        style={{ width: "60px", }}
                     />
                     <p className="text-muted mt-2">Estamos procesando tu pedido, por favor no cierres esta ventana...</p>
                 </div>

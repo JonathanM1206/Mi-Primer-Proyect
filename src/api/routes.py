@@ -9,7 +9,9 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from datetime import timedelta,datetime  
 from werkzeug.utils import secure_filename
 import uuid  # para generar guest_id únicos  
-from sqlalchemy import or_ ,func
+from sqlalchemy import or_ ,func 
+from dotenv import load_dotenv  # importa dotenv
+load_dotenv()  # carga variables del .env
 
 #Enviar Mails: 
 from flask_mail import Message
@@ -197,7 +199,7 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 CORS(app)
 
 # Encriptacion JWT
-app.config["JWT_SECRET_KEY"] = os.getenv('JWT_SECRET_KEY_OWN', 'super-secret-key') 
+app.config["JWT_SECRET_KEY"] = os.getenv('JWT_SECRET_KEY_OWN') 
 app.config["JWT_TOKEN_LOCATION"] = ["headers"] 
 
 bcrypt = Bcrypt() 
@@ -230,7 +232,7 @@ def create_user():
     try:
         #Validacion de Campos requeridos 
         if not data.get('email') or not data.get('name') or not data.get('password') or not data.get('direccion') or not data.get('telefono'): 
-            return jsonify({'error':'Email, Name ,Direction,Telephone and  Password are required'}),400 
+            return jsonify({'error':'Email, Nombre ,Direccion,Telefono and  Contraseña son requeridos'}),400 
         
         #Verificar si el usuario ya existe  
         existing_user=User.query.filter_by(email=data.get('email')).first() 
@@ -1237,7 +1239,7 @@ def ver_todos_pagos():
 
     return jsonify(resultado), 200 
 
-#Pagos de Usuario 
+#Pagos de Usuario (No se Usa AUn )
 @api.route('/usuario/pagos', methods=['GET'])
 def ver_pagos_usuario():
     user_id = request.args.get('user_id')
@@ -1895,8 +1897,18 @@ def buscar_clientes():
  
  
 #Ruta para guardar comentarios en los pedidos: 
-@api.route('/pedido/<int:pedido_id>/comentario', methods=['PUT'])
-def actualizar_comentario(pedido_id):
+@api.route('/pedido/<int:pedido_id>/comentario', methods=['PUT']) 
+@jwt_required()
+def actualizar_comentario(pedido_id): 
+       # Obtener el id del administrador desde el JWT
+    admin_id = get_jwt_identity()
+
+    # Buscar el administrador en la base de datos
+    admin = Administrador.query.get(admin_id)
+
+    # Verificar que sea administrador
+    if not admin or admin.role != "admin":
+        return jsonify({"msg": "Acceso denegado"}), 403
 
     data = request.get_json()
 

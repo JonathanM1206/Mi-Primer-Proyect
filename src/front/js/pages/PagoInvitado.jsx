@@ -89,7 +89,10 @@ export const PagoInvitado = () => {
 
         // 2. Proceder con el registro y login
         const ok = await registrarYLogin();
-        if (!ok) return;
+        if (!ok) {
+            setLoading(false); // 🔥 APAGAS antes de salir 
+            return;
+        }
 
         // 3. Crear el pedido
         const pedido = await actions.crearPedido({
@@ -99,6 +102,7 @@ export const PagoInvitado = () => {
 
         if (!pedido) {
             swal("Error", "No se pudo crear el pedido", "error");
+            setLoading(false); // 🔥 IMPORTANTE
             return;
         }
 
@@ -116,6 +120,7 @@ export const PagoInvitado = () => {
 
             if (!response.ok) {
                 swal("Error", "No se pudo registrar el pago", "error");
+                setLoading(false); // 🔥 FALTA ESTO
                 return;
             }
 
@@ -127,7 +132,7 @@ export const PagoInvitado = () => {
             navigate("/HistorialPedidos");
 
         } catch (error) {
-            console.error("Error en pago transferencia:", error);
+
             swal("Error", "Ocurrió un problema en la comunicación con el servidor", "error");
         } finally {
             setLoading(false); // <--- DESBLOQUEAR AL FINALIZAR
@@ -143,7 +148,10 @@ export const PagoInvitado = () => {
         try {
             const ok = await registrarYLogin();
 
-            if (!ok) return;
+            if (!ok) {
+                setLoading(false); // 🔥 
+                return;
+            }
 
             const pedido = await actions.crearPedido({
                 total: 50,
@@ -153,6 +161,7 @@ export const PagoInvitado = () => {
             if (!pedido) {
 
                 swal("Error", "No se pudo crear el pedido", "error");
+                setLoading(false); // 🔥 FALTA ESTO
                 return;
 
             }
@@ -174,6 +183,7 @@ export const PagoInvitado = () => {
             if (!response.ok) {
 
                 swal("Error", "No se pudo crear el pago", "error");
+                setLoading(false); // 🔥 FALTA ESTO
                 return;
 
             }
@@ -222,14 +232,18 @@ export const PagoInvitado = () => {
                     required
                 />
 
-                <input
-                    type="text"
-                    name="telefono"
-                    placeholder="Telefono"
-                    className="form-control mb-3"
-                    onChange={handleChange}
-                    required
-                />
+                <div className="input-group mb-3">
+                    <span className="input-group-text" id="basic-addon1">+504</span>
+                    <input
+                        type="text"
+                        name="telefono"
+                        placeholder="Número de teléfono"
+                        className="form-control"
+                        onChange={handleChange}
+                        value={formData.telefono}
+                        required
+                    />
+                </div>
 
                 <input
                     type="text"

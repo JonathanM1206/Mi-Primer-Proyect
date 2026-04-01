@@ -1,19 +1,50 @@
-import React, { useEffect, useContext } from "react";
+import React, { useEffect,useState, useContext } from "react";
 import { Context } from "../store/appContext";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router-dom"; 
+import carga from "../../../assets/loading.gif"
 //ESTE ES LO QUE LE APARECE AL ADMIN AL BUSCAR EL HISTORIAL DEL CLIENTE 
 const HistorialCliente = () => {
 
     const { store, actions } = useContext(Context);
-
+      const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const { id } = useParams();
 
     useEffect(() => {
+        const cargarHistorial=async ()=>{ 
+            try {
+                setLoading(true) 
+                await actions.getPedidosPorUsuario(id);
+                setError(null)
+            } catch (error) {
+                setError("Error al Cargar el Historial del Cliente")
+            }finally{  
+                setLoading(false)
 
-        actions.getPedidosPorUsuario(id);
+            }
+        }
+         cargarHistorial()
+    }, []); 
 
-    }, []);
+    if (loading) {
+        return (
+            <div className="text-center mt-5">
+                <img src={carga} alt="Cargando..." style={{ width: "150px" }} />
+                <p>Cargando clientes...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center mt-5 text-danger">
+                <h4>{error}</h4>
+            </div>
+        );
+    }
+
+
 
 
     return (

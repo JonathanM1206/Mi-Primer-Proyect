@@ -1,16 +1,48 @@
-import React, { useEffect, useContext } from "react";
-import { Context } from "../store/appContext";
+import React, { useEffect, useState,useContext } from "react";
+import { Context } from "../store/appContext"; 
+import carga from "../../../assets/loading.gif"
+
 //LO QUE LE APARECE AL USUUARIO ESTA ES LA INFORMACION
 export const HistorialPedidos = () => {
 
-    const { store, actions } = useContext(Context);
+    const { store, actions } = useContext(Context); 
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        const cargarPedido = async()=>{ 
+            try {
+                setLoading(true) 
+               await actions.getHistorialPedidos();
+                await actions.getProductos(); // obtener productos para mostrar nombres
+            } catch (error) {
+               setError("Error al cargar los Pedidos") 
+            }finally{ 
+                setLoading(false)
+            }
+        }
+      cargarPedido()
 
-        actions.getHistorialPedidos();
-        actions.getProductos(); // obtener productos para mostrar nombres
+    }, []); 
 
-    }, []);
+
+    if (loading) {
+        return (
+            <div className="text-center mt-5">
+                <img src={carga} alt="Cargando..." style={{ width: "150px" }} />
+                <p>Cargando Historial...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center mt-5 text-danger">
+                <h4>{error}</h4>
+            </div>
+        );
+    }
+
 
     // Obtener nombre del producto usando el ID
     const getNombreProducto = (id) => {

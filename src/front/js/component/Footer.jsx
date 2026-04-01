@@ -30,7 +30,7 @@ const Footer = () => {
                         {/* Redes Sociales */}
                         <div className="flex justify-center lg:justify-start gap-5 mb-6">
                             <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
-                                <img src={faceb} alt="Facebook" className="w-8 h-8 object-contain" style={{ width: '45px', height: '50px' }} />
+                                <img src={faceb} alt="Facebook" className="w-8 h-8 object-contain" style={{ width: '50px', height: '50px' }} />
                             </a>
 
                             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">

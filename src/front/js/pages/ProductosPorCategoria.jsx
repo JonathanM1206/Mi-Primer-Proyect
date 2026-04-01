@@ -2,6 +2,9 @@ import React, { useEffect, useContext, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Context } from '../store/appContext.jsx';
 import swal from 'sweetalert';
+import carga from "../../../assets/loading.gif"
+
+
 
 const ProductosPorCategoria = () => {
 
@@ -16,13 +19,53 @@ const ProductosPorCategoria = () => {
     const [editingId, setEditingId] = useState(null);
     const [productToEdit, setProductToEdit] = useState(null);
     const [nuevaImagen, setNuevaImagen] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        const cargarProductos = async () => {
+            try {
+                setLoading(true);
+                await actions.getProductosPorCategoria(categoriaId);
+                await actions.getCategoriaPorId(categoriaId);
+                setError(null);
+            } catch (error) {
+                setError("Error al cargar los productos");
+            } finally {
+                setLoading(false);
 
-        actions.getProductosPorCategoria(categoriaId);
-        actions.getCategoriaPorId(categoriaId);
+            }
+        }
+        cargarProductos()
 
     }, [categoriaId]);
+
+    //Sino carga los Productops muestra una ruedita de carga ; 
+    if (loading) {
+        return (
+            <div className="text-center mt-5">
+                <img src={carga} alt="Cargando..." style={{ width: "150px" }} />
+                <p>Cargando productos...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center mt-5 text-danger">
+                <h4>{error}</h4>
+            </div>
+        );
+    }
+
+    if (!loading && store.productos.length === 0) {
+        return (
+            <div className="text-center mt-5">
+                <h4>No hay productos registrados</h4>
+            </div>
+        );
+    }
+
 
     const productos = store.productosPorCategoria || [];
 
@@ -148,7 +191,13 @@ const ProductosPorCategoria = () => {
                                     src={`https://gloomy-troll-6949wqj5prw6f47vp-5000.app.github.dev${producto.imagen}?t=${timestamp}`}
                                     alt={producto.name}
                                     className="card-img-top"
-                                    style={{ height: '200px', objectFit: 'cover' }}
+                                    style={{
+                                        height: "220px",       // Altura fija como en ListarProductos
+                                        objectFit: "contain",  // 🔥 CLAVE: muestra TODA la imagen (no la recorta)
+                                        background: "#fff",    // Fondo blanco para que no se vea feo si sobra espacio
+                                        padding: "15px",       // Espacio interno (como marco)
+                                        borderRadius: "15px"   // Bordes redondeados
+                                    }}
                                 />
 
                                 <div className="card-body">

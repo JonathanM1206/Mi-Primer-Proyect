@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Context } from '../store/appContext.jsx';
-import swal from 'sweetalert';
+import swal from 'sweetalert'; 
+import carga from "../../../assets/loading.gif"
+
 
 const DetalleProducto = () => {
     const { store, actions } = useContext(Context);
@@ -13,7 +15,9 @@ const DetalleProducto = () => {
     const [editando, setEditando] = useState(false);
     const [productoEditado, setProductoEditado] = useState({});
     const [nuevasImagenes, setNuevasImagenes] = useState(null); // Para subir múltiples
-    const [imagenActiva, setImagenActiva] = useState(null);
+    const [imagenActiva, setImagenActiva] = useState(null); 
+        const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Determinar rol de forma segura
     const role = store.user?.role || store.admin?.role || null;
@@ -55,8 +59,22 @@ const DetalleProducto = () => {
         }
     };
 
-    useEffect(() => {
-        fetchProducto();
+    useEffect(() => { 
+
+        const viendoProducto= async()=>{ 
+            try{ 
+                setLoading(true) 
+            await fetchProducto(); 
+            setError(null)
+            }catch(error){  
+                setError("Error al ver el Producto") 
+
+            }finally{ 
+                setLoading(false)
+            }
+        } 
+        viendoProducto()
+     
     }, [id]);
 
     // Manejo de Carrito
@@ -115,8 +133,24 @@ const DetalleProducto = () => {
             }
         }
     };
+      if (loading) {
+        return (
+            <div className="text-center mt-5">
+                <img src={carga} alt="Cargando..." style={{ width: "150px" }} />
+                <p>Cargando clientes...</p>
+            </div>
+        );
+    }
 
-    if (!producto) return <div className="text-center mt-5">Cargando...</div>;
+    if (error) {
+        return (
+            <div className="text-center mt-5 text-danger">
+                <h4>{error}</h4>
+            </div>
+        );
+    }
+
+    // if (!producto) return <div className="text-center mt-5">Cargando...</div>;
 
     return (
         <>

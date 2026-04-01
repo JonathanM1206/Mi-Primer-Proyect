@@ -47,7 +47,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     if (!response.ok) {
 
                         let errorMessage = 'Algo salió mal. Intenta de nuevo.';
-/usuario/pagos
+
                         try {
 
                             const errorData = await response.json();
@@ -1215,7 +1215,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             // 🔹 Ver historial de pedidos (user o guest)
             getHistorialPedidos: async () => {
-
+                 const token=getStore().token
                 try {
 
                     const store = getStore();
@@ -1250,7 +1250,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 
                     const response = await fetch(url, {
                         method: "GET",
-                        headers: { "Content-Type": "application/json" }
+                        headers: { "Content-Type": "application/json" 
+                            , Authorization: `Bearer ${token}`
+                        }
                     });
 
                     const data = await response.json();
@@ -1280,13 +1282,15 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             // Pedido por ID de User: 
             getPedidosPorUsuario: async (user_id) => {
+                                const token = getStore().token;
 
                 try {
 
                     const response = await fetch(`${baseUrl}api/pedidos/usuario/${user_id}`, {
                         method: "GET",
                         headers: {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json", 
+                                Authorization: `Bearer ${token}`
                         }
                     });
 
@@ -1387,13 +1391,14 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             //Pedidos Por Fechas: 
             getPedidosPorFecha: async (fecha) => {
-
+                 const token = getStore().token;
                 try {
 
                     const response = await fetch(`${baseUrl}api/admin/pedidos/fecha/${fecha}`, {
                         method: "GET",
                         headers: {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json", 
+                            Authorization: `Bearer ${token}`
                         }
                     })
 
@@ -1416,6 +1421,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             //Actualizar Estado:  De pendiente a Pagado
             // 🔹 Actualizar Estado de Pago
             actualizarEstadoPago: async (pago_id, estado) => {
+                const token = getStore().token;
 
                 const store = getStore(); // obtenemos el estado actual
 
@@ -1424,7 +1430,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                     const response = await fetch(`${baseUrl}api/pago/${pago_id}`, {
                         method: "PUT", // método para actualizar
                         headers: {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json", 
+                            Authorization: `Bearer ${token}`
                         },
                         body: JSON.stringify({ estado }) // enviamos el nuevo estado
                     });
@@ -1478,6 +1485,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             // 🔹 Actualizar estado de envío  PREPARANDO O ENTREGADO
             actualizarEstadoEnvio: async (pedido_id, estado_envio) => {
+                const token = getStore().token;
 
                 const store = getStore();
 
@@ -1486,7 +1494,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                     const response = await fetch(`${baseUrl}api/pedido/${pedido_id}/envio`, {
                         method: "PUT",
                         headers: {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json", 
+                             Authorization: `Bearer ${token}`
                         },
                         body: JSON.stringify({ estado_envio })
                     });
@@ -1522,6 +1531,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             // 🔹 Cancelar pedido
             cancelarPedido: async (pedido_id) => {
+                const token = getStore().token;
 
                 const store = getStore()
 
@@ -1530,7 +1540,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                     const response = await fetch(`${baseUrl}api/pedido/${pedido_id}/cancelar`, {
                         method: "PUT",
                         headers: {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json", 
+                            Authorization: `Bearer ${token}`
                         }
                     })
 
@@ -1625,7 +1636,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             //Guardar Comentarios en cada pedido
             actualizarComentarioPedido: async (pedido_id, comentario) => {
-
+                const token=getStore().token
                 const store = getStore() // obtenemos el store actual
 
                 try {
@@ -1633,7 +1644,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                     const response = await fetch(`${baseUrl}api/pedido/${pedido_id}/comentario`, {
                         method: "PUT",
                         headers: {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json", 
+                               Authorization: `Bearer ${token}`
                         },
                         body: JSON.stringify({ comentario })
                     })
