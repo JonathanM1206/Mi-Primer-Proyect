@@ -30,15 +30,15 @@ const Footer = () => {
 
                         {/* Redes Sociales */}
                         <div className="flex justify-center lg:justify-start gap-5 mb-6">
-                            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
+                            <a href="https://www.facebook.com/p/Fuente-De-Salud-Bethel-100057276346979/" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
                                 <img src={faceb} alt="Facebook" className="w-8 h-8 object-contain" style={{ width: '50px', height: '50px' }} />
                             </a>
 
-                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
+                            <a href="https://www.instagram.com/fuentebethel/" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
                                 <img src={instag} alt="Instagram" className="w-8 h-8 object-contain" style={{ width: '50px', height: '60px' }} />
                             </a>
 
-                            <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
+                            <a href="https://www.tiktok.com/@fuentedesaludbethel?_r=1&_t=ZS-95K9ZNcMQhm" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
                                 <img src={tikto} alt="TikTok" className="w-8 h-8 object-contain" style={{ width: '50px', height: '60px' }} />
                             </a>
                             <hr style={{ borderTop: "1px solid white", opacity: "0.3" }} />
@@ -52,11 +52,11 @@ const Footer = () => {
                         <div className="border-t border-gray-300 w-20 my-4"></div>
 
                         <div className="flex justify-center lg:justify-start items-center gap-6">
-                            <a href="https://wa.me/50400000000" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
+                            <a href="https://wa.me/50496336227" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
                                 <img src={what} alt="WhatsApp" className="w-10 h-10 object-contain" style={{ width: '50px', height: '60px' }} />
                             </a>
 
-                            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=ventas@bethel.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
+                            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=fuentedesaludbethel@gmail.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
                                 <img src={g} alt="Gmail" className="w-10 h-10 object-contain" style={{ width: '70px', height: '60px' }} />
                             </a>
                         </div>
