@@ -97,7 +97,7 @@ Gracias por tu compra.
 def correo_pago_transferencia(usuario, pedido):
 
     # números de cuenta (ejemplo)
-    cuenta_bac = "123456789012"
+    cuenta_bac = "741985771"
     cuenta_atlantida = "987654321098"
 
     cuerpo = f"""
@@ -115,10 +115,12 @@ Total a pagar: L {pedido.total}
 Datos para realizar la transferencia
 ------------------------------------
 
-Banco BAC
+Banco BAC 
+Nombre: Jonathan Alfredo Moesses
 Cuenta: {cuenta_bac}
 
-Banco Atlántida
+Banco Atlántida 
+Nombre: Jonathan Alfredo Moesses
 Cuenta: {cuenta_atlantida}
 
 Importante:
@@ -1412,7 +1414,8 @@ def admin_pagos_por_usuario(user_id):
 # ======================
 # CREAR PEDIDO
 # ======================
-@api.route('/pedido', methods=['POST'])
+@api.route('/pedido', methods=['POST'])  
+@jwt_required(optional=True) # permite que invitado y user_id compren
 def crear_pedido():
 
     data = request.get_json()  
@@ -1424,7 +1427,7 @@ def crear_pedido():
     guest_id = data.get("guest_id")  
     # 🔹 id invitado
 
-    user_id = data.get("user_id")  
+    user_id = get_jwt_identity()
     # 🔹 id usuario
 
     # -----------------------------
@@ -1559,7 +1562,7 @@ def crear_pedido():
 @jwt_required() #obliga a que el usuario esté logueado 
 def obtener_pedidos():
 
-    user_id = request.args.get("user_id")
+    user_id = get_jwt_identity() 
     guest_id = request.args.get("guest_id")
 
     if user_id:
@@ -1568,7 +1571,7 @@ def obtener_pedidos():
 
     elif guest_id:
         pedidos = Pedido.query.filter_by(guest_id=guest_id)\
-            .order_by(Pedido.fecha.desc()).all()
+             .order_by(Pedido.fecha.desc()).all()
 
     else:
         return jsonify({"error": "Debe enviar user_id o guest_id"}), 400

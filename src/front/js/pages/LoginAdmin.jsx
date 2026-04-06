@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Context } from '../store/appContext.jsx'
 import { Link } from 'react-router-dom'
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const LoginAdmin = () => {
     const [email, setEmail] = useState('')
@@ -10,6 +11,7 @@ const LoginAdmin = () => {
     const [error, setError] = useState('')
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
+    const [mostrarPassword, setMostrarPassword] = useState(false) // mostrar/ocultar contraseña
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -34,7 +36,7 @@ const LoginAdmin = () => {
     }, [store.admin, navigate]);
     return (
         <div className="d-flex justify-content-center  vh-100" style={{ background: "#8bdabd" }}>
-            <div  className="card p-4 shadow mt-5" style={{ width: "30rem", height: "30rem", borderRadius: "15px", backgroundColor: "#ffffff", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)" }}>
+            <div className="card p-4 shadow mt-5" style={{ width: "30rem", height: "30rem", borderRadius: "15px", backgroundColor: "#ffffff", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)" }}>
                 <h1>HOLA ADMINISTRADOR</h1>
                 <form onSubmit={handleSubmit}>
 
@@ -49,16 +51,43 @@ const LoginAdmin = () => {
                             disabled={loading}
                         />
                     </div>
-                    <div className="mb-4">
+                    <div className="mb-4" style={{ position: "relative" }}>
+
+                        {/* Input contraseña */}
                         <input
-                            type="password"
+                            type={mostrarPassword ? "text" : "password"} // muestra u oculta
                             placeholder="Contraseña"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
                             className="form-control border-success shadow"
                             disabled={loading}
+                            style={{ paddingRight: "45px" }} // espacio para icono
                         />
+
+                        {/* Botón ojo */}
+                        <button
+                            type="button"
+                            onClick={() => setMostrarPassword(!mostrarPassword)} // cambia estado
+                            disabled={loading}
+                            style={{
+                                position: "absolute",
+                                right: "10px",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                border: "none",
+                                background: "transparent",
+                                cursor: "pointer",
+                                color: "#198754"
+                            }}
+                        >
+                            {mostrarPassword ? (
+                                <i className="fas fa-eye-slash"></i>
+                            ) : (
+                                <i className="fas fa-eye"></i>
+                            )}
+                        </button>
+
                     </div>
                     <button
                         type="submit"

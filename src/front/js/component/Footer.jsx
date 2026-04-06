@@ -5,6 +5,7 @@ import faceb from "../../../assets/face.png";
 import tikto from "../../../assets/tik.png";
 import g from "../../../assets/gmail.png";
 import what from "../../../assets/wha.png";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
     return (
@@ -71,18 +72,28 @@ const Footer = () => {
                         <div className="border-t border-gray-300 w-20 my-4"></div>
 
                         <ul className="space-y-2 text-sm text-gray-200">
-                            <li className="hover:text-white cursor-pointer transition">
-                                Política de privacidad
+                            <li>
+                                <Link
+                                    to="/politica"
+                                    className="text-decoration-none"
+                                    style={{ color: "white" }} >
+                                    Política de privacidad
+                                </Link>
                             </li>
-                            <li className="hover:text-white cursor-pointer transition">
-                                Términos & Condiciones
+                            <li>
+                                <Link
+                                    to="/terminos"
+                                    className="text-decoration-none"
+                                    style={{ color: "white" }}>
+                                    Términos & Condiciones
+                                </Link>
                             </li>
                         </ul>
                         <hr style={{ borderTop: "1px solid white", opacity: "0.3" }} />
                     </div>
 
-                    
-                   
+
+
                 </div>
 
                 {/* LÍNEA INFERIOR */}

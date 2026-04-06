@@ -30,8 +30,12 @@ import BuscarClientes from "./pages/BuscarClientes.jsx"
 import HistorialCliente from "./pages/HistorialCliente.jsx";
 import AdminPedidos from "./pages/AdminPedidos"
 import RecuperarContrasena from './pages/RecuperarContrasena.jsx';
-import CambiarContrasena from './pages/CambiarContrasena.jsx'; 
+import CambiarContrasena from './pages/CambiarContrasena.jsx';
 import ReporteVentas from './pages/ReporteVentas.jsx';
+import Politica from "./pages/Politica.jsx"
+import Termino from "./pages/Termino.jsx";
+
+
 const Layout = () => {
   const { store, actions } = useContext(Context);
 
@@ -50,9 +54,11 @@ const Layout = () => {
         <Route path="/ProductosPorCategoria/:categoriaId" element={<ProductosPorCategoria />} />
         <Route path="/buscar-productos" element={<BuscarProductos />} />
         <Route path="/buscar-clientes" element={<BuscarClientes />} />
-       <Route path="/historial-cliente/:id" element={<HistorialCliente />} />
-      <Route path="/recuperarContrasena" element={<RecuperarContrasena />} />
-       <Route path="/cambiarContrasena" element={<CambiarContrasena/>}/>
+        <Route path="/historial-cliente/:id" element={<HistorialCliente />} />
+        <Route path="/recuperarContrasena" element={<RecuperarContrasena />} />
+        <Route path="/cambiarContrasena" element={<CambiarContrasena />} />
+        <Route path="/politica" element={<Politica />} />
+        <Route path="/terminos" element={<Termino />} />
 
 
         {/* USUARIO */}
@@ -69,8 +75,8 @@ const Layout = () => {
         <Route path="/editAdmin" element={<EditAdmin />} />
         <Route path="/crearProducto" element={<CrearProducto />} />
         <Route path="/listarUsuarios" element={<ListaUsuario />} />
-        <Route path="/admin/pedidos" element={<AdminPedidos />} /> 
-        <Route path='/ReporteVentas' element={<ReporteVentas/>}/>
+        <Route path="/admin/pedidos" element={<AdminPedidos />} />
+        <Route path='/ReporteVentas' element={<ReporteVentas />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />

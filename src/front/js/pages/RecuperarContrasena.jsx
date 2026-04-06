@@ -63,7 +63,8 @@ className="form-control"
 
 <button
 className="btn btn-primary mt-3"
-type="submit"
+type="submit" 
+style={{marginBottom:"200px"}}
 >
 
 Enviar código

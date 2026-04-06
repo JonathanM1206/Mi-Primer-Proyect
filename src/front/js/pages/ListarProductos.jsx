@@ -157,7 +157,7 @@ const ListarProductos = () => {
             </style>
 
             <div className="container mt-4">
-                <h2 className="mb-4">Lista de Productos Disponibles</h2>
+                <h2 className="mb-4">Productos Disponibles</h2>
 
                 <div className="row">
                     {store.productos.length === 0 && (

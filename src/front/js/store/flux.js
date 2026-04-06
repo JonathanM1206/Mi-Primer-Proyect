@@ -1165,23 +1165,19 @@ const getState = ({ getStore, getActions, setStore }) => {
                     }
 
                     const payload = {
-
-                        ...datosPedido, // datos del pedido
-                        user_id: store.user?.id || null, // usuario si existe
-                        guest_id: guestId // guest id
-
-                    };
+                        ...datosPedido, // dirección u otros datos
+                        guest_id: guestId // guest para migrar carrito
+                    }; 
+                    
+                    const token = store.token || localStorage.getItem("token");
 
                     const response = await fetch(`${baseUrl}api/pedido`, {
-
                         method: "POST",
-
                         headers: {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json",
+                            Authorization: token ? `Bearer ${token}` : ""
                         },
-
                         body: JSON.stringify(payload)
-
                     });
 
                     const data = await response.json();
@@ -1215,7 +1211,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             // 🔹 Ver historial de pedidos (user o guest)
             getHistorialPedidos: async () => {
-                 const token=getStore().token
+                const token = getStore().token
                 try {
 
                     const store = getStore();
@@ -1250,7 +1246,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 
                     const response = await fetch(url, {
                         method: "GET",
-                        headers: { "Content-Type": "application/json" 
+                        headers: {
+                            "Content-Type": "application/json"
                             , Authorization: `Bearer ${token}`
                         }
                     });
@@ -1282,15 +1279,15 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             // Pedido por ID de User: 
             getPedidosPorUsuario: async (user_id) => {
-                                const token = getStore().token;
+                const token = getStore().token;
 
                 try {
 
                     const response = await fetch(`${baseUrl}api/pedidos/usuario/${user_id}`, {
                         method: "GET",
                         headers: {
-                            "Content-Type": "application/json", 
-                                Authorization: `Bearer ${token}`
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
                         }
                     });
 
@@ -1391,13 +1388,13 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             //Pedidos Por Fechas: 
             getPedidosPorFecha: async (fecha) => {
-                 const token = getStore().token;
+                const token = getStore().token;
                 try {
 
                     const response = await fetch(`${baseUrl}api/admin/pedidos/fecha/${fecha}`, {
                         method: "GET",
                         headers: {
-                            "Content-Type": "application/json", 
+                            "Content-Type": "application/json",
                             Authorization: `Bearer ${token}`
                         }
                     })
@@ -1430,7 +1427,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     const response = await fetch(`${baseUrl}api/pago/${pago_id}`, {
                         method: "PUT", // método para actualizar
                         headers: {
-                            "Content-Type": "application/json", 
+                            "Content-Type": "application/json",
                             Authorization: `Bearer ${token}`
                         },
                         body: JSON.stringify({ estado }) // enviamos el nuevo estado
@@ -1494,8 +1491,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                     const response = await fetch(`${baseUrl}api/pedido/${pedido_id}/envio`, {
                         method: "PUT",
                         headers: {
-                            "Content-Type": "application/json", 
-                             Authorization: `Bearer ${token}`
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
                         },
                         body: JSON.stringify({ estado_envio })
                     });
@@ -1540,7 +1537,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     const response = await fetch(`${baseUrl}api/pedido/${pedido_id}/cancelar`, {
                         method: "PUT",
                         headers: {
-                            "Content-Type": "application/json", 
+                            "Content-Type": "application/json",
                             Authorization: `Bearer ${token}`
                         }
                     })
@@ -1636,7 +1633,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             //Guardar Comentarios en cada pedido
             actualizarComentarioPedido: async (pedido_id, comentario) => {
-                const token=getStore().token
+                const token = getStore().token
                 const store = getStore() // obtenemos el store actual
 
                 try {
@@ -1644,8 +1641,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                     const response = await fetch(`${baseUrl}api/pedido/${pedido_id}/comentario`, {
                         method: "PUT",
                         headers: {
-                            "Content-Type": "application/json", 
-                               Authorization: `Bearer ${token}`
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
                         },
                         body: JSON.stringify({ comentario })
                     })

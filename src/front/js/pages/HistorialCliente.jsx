@@ -80,7 +80,7 @@ const HistorialCliente = () => {
 
                                 <p>Direccion: {pedido.usuario.direccion}</p>
 
-                                <p>Pedido #{pedido.pedido_id}</p>
+                                <p><strong>Pedido # </strong>{pedido.pedido_id}</p>
 
                                 <p>
                                     Fecha: {new Date(pedido.fecha).toLocaleDateString()}

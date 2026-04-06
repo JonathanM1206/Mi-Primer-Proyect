@@ -2,8 +2,7 @@ import React, { useState, useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Context } from '../store/appContext.jsx'
 import { Link } from 'react-router-dom'
-
-
+import '@fortawesome/fontawesome-free/css/all.min.css';
 const LoginUsuario = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -11,6 +10,7 @@ const LoginUsuario = () => {
     const [error, setError] = useState('')
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
+    const [mostrarPassword, setMostrarPassword] = useState(false) // controla mostrar/ocultar contraseña
 
 
 
@@ -58,16 +58,43 @@ const LoginUsuario = () => {
                             disabled={loading}
                         />
                     </div>
-                    <div className="mb-4">
+                    <div className="mb-4" style={{ position: "relative" }}>
+
+                        {/* Input contraseña */}
                         <input
-                            type="password"
+                            type={mostrarPassword ? "text" : "password"} // cambia entre visible y oculto
                             placeholder="Contraseña"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
                             className="form-control border-success shadow"
                             disabled={loading}
+                            style={{ paddingRight: "45px" }} // espacio para el icono
                         />
+
+                        {/* Botón ojo */}
+                        <button
+                            type="button"
+                            onClick={() => setMostrarPassword(!mostrarPassword)} // cambia estado
+                            disabled={loading}
+                            style={{
+                                position: "absolute",
+                                right: "10px",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                border: "none",
+                                background: "transparent",
+                                cursor: "pointer",
+                                color: "#198754"
+                            }}
+                        >
+                            {mostrarPassword ? (
+                                <i className="fas fa-eye-slash"></i>
+                            ) : (
+                                <i className="fas fa-eye"></i>
+                            )}
+                        </button>
+
                     </div>
                     <button
                         type="submit"

@@ -248,7 +248,7 @@ export const PagoInvitado = () => {
                 <input
                     type="text"
                     name="direccion"
-                    placeholder="Direccion, incluya departamento y ciudad"
+                        placeholder="Direccion Ej: Calle 10 #123, Colonia Centro, Tegucigalpa"
                     className="form-control mb-3"
                     onChange={handleChange}
                     required

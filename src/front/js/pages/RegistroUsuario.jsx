@@ -51,7 +51,9 @@ if(store.user){
                         className="form-control border-success shadow"
                     />
                 </div> 
-                 <div className="mb-5">
+                 <div className="input-group mb-5"> 
+                    <span className="input-group-text" id="basic-addon1">+504</span>
+
                     <input
                         type="number"
                         placeholder="Telefono"
@@ -61,10 +63,11 @@ if(store.user){
                         className="form-control border-success shadow"
                     />
                 </div> 
-                  <div className="mb-5">
+                  <div className="mb-5"> 
+                    
                     <input
                         type="text"
-                        placeholder="Direccion"
+                        placeholder="Direccion Ej: Calle 10 #123, Colonia Centro, Tegucigalpa"
                         value={direccion}
                         onChange={(e) => setDireccion(e.target.value)}
                         required
